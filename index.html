@@ -1,108 +1,856 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BOM Tree Viewer</title>
-
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-body { font-family: Arial; margin:20px; }
-textarea { width:100%; height:200px; }
-button { padding:10px 20px; font-size:16px; }
-
-ul { list-style-type:none; padding-left:20px; }
-li { margin:4px 0; }
-
-.node {
-  padding:4px 8px;
-  border-radius:6px;
-  cursor:pointer;
-  display:inline-block;
+:root {
+  --bg: #0a0f1a;
+  --bg-elevated: #111827;
+  --bg-card: #1a2235;
+  --fg: #f1f5f9;
+  --fg-muted: #64748b;
+  --accent: #00d4aa;
+  --accent-dim: rgba(0, 212, 170, 0.15);
+  --border: #1e293b;
+  --level-1: #3b82f6;
+  --level-2: #10b981;
+  --level-3: #f59e0b;
+  --level-4: #ef4444;
+  --level-5: #8b5cf6;
+  --level-6: #ec4899;
 }
 
-.level1 { background:#d0e7ff; }
-.level2 { background:#d4f4dd; }
-.level3 { background:#fff3cd; }
-.level4 { background:#f8d7da; }
-.level5 { background:#e2e3ff; }
-.level6 { background:#e9ecef; }
+* { box-sizing: border-box; }
 
-.hidden { display:none; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 170, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.06), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
+
+/* Textarea styling */
+.data-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 16px;
+  resize: vertical;
+  width: 100%;
+  min-height: 180px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.data-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.data-input::placeholder { color: var(--fg-muted); }
+
+/* Button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  background: #00eabc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-elevated);
+  border-color: var(--fg-muted);
+}
+
+.btn-icon {
+  padding: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+
+.btn-icon.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Stats cards */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* Search input */
+.search-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px 10px 40px;
+  color: var(--fg);
+  font-size: 14px;
+  width: 100%;
+  max-width: 300px;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* Tree styles */
+.tree-container {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  overflow: auto;
+  max-height: 600px;
+}
+
+.tree-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tree-list .tree-list {
+  padding-left: 24px;
+  margin-left: 12px;
+  border-left: 1px dashed var(--border);
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.2s, margin 0.2s;
+}
+
+.tree-list .tree-list.expanded {
+  max-height: 10000px;
+  opacity: 1;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.tree-item {
+  margin: 2px 0;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.tree-node:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tree-node:active {
+  transform: scale(0.99);
+}
+
+.tree-node.highlighted {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+}
+
+.node-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: transform 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.node-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.node-toggle svg {
+  width: 14px;
+  height: 14px;
+  color: var(--fg-muted);
+  transition: transform 0.2s;
+}
+
+.node-toggle.expanded svg {
+  transform: rotate(90deg);
+}
+
+.node-toggle.empty {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.node-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.level-1 .node-badge { background: var(--level-1); }
+.level-2 .node-badge { background: var(--level-2); }
+.level-3 .node-badge { background: var(--level-3); }
+.level-4 .node-badge { background: var(--level-4); }
+.level-5 .node-badge { background: var(--level-5); }
+.level-6 .node-badge { background: var(--level-6); }
+
+.node-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-component {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-component code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.node-description {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.node-qty {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.copy-btn {
+  opacity: 0;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.tree-node:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--fg-muted);
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  opacity: 0.3;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  color: var(--fg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+  z-index: 1000;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stat-card { padding: 12px 16px; }
+  .stat-value { font-size: 22px; }
+  .tree-container { padding: 12px; }
+  .node-component { font-size: 13px; }
+}
 </style>
 </head>
 
-<body>
+<body class="p-4 md:p-8 max-w-6xl mx-auto">
 
-<h2>BOM Tree Generator (Fixed)</h2>
+<!-- Header -->
+<header class="mb-8 animate-in">
+  <h1 class="text-3xl md:text-4xl font-bold mb-2">
+    BOM Tree <span class="text-[var(--accent)]">Viewer</span>
+  </h1>
+  <p class="text-[var(--fg-muted)]">Visualize Bill of Materials hierarchy with interactive tree navigation</p>
+</header>
 
-<textarea id="data"></textarea>
-<br>
-<button onclick="buildTree()">Generate BOM Tree</button>
+<!-- Input Section -->
+<section class="mb-6 animate-in stagger-1">
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
+    <label class="text-sm font-medium text-[var(--fg-muted)]">Paste BOM Data (tab-separated)</label>
+    <button onclick="loadSampleData()" class="btn btn-secondary text-sm">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      Load Sample Data
+    </button>
+  </div>
+  <textarea id="data" class="data-input" placeholder="Paste your BOM data here...&#10;&#10;Format: Tab-separated columns&#10;Required: Level (column 2), Component (column 5), Description (column 6), Qty (column 7), UoM (column 9)"></textarea>
+  <div class="flex flex-wrap gap-3 mt-4">
+    <button onclick="buildTree()" class="btn btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      Generate Tree
+    </button>
+    <button onclick="clearAll()" class="btn btn-secondary">Clear</button>
+  </div>
+</section>
 
-<div id="tree"></div>
+<!-- Stats Section -->
+<section id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-in stagger-2" style="display: none;">
+  <div class="stat-card">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Total Items</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-levels">0</div>
+    <div class="stat-label">Max Depth</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-assemblies">0</div>
+    <div class="stat-label">Assemblies</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-leafs">0</div>
+    <div class="stat-label">Components</div>
+  </div>
+</section>
+
+<!-- Controls -->
+<section id="controls" class="flex flex-wrap items-center justify-between gap-4 mb-4 animate-in stagger-3" style="display: none;">
+  <div class="relative">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-muted)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="search" class="search-input" placeholder="Search components..." oninput="handleSearch(this.value)">
+  </div>
+  <div class="flex gap-2">
+    <button onclick="expandAll()" class="btn-icon" title="Expand All">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+      </svg>
+    </button>
+    <button onclick="collapseAll()" class="btn-icon" title="Collapse All">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+        <line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
+      </svg>
+    </button>
+  </div>
+</section>
+
+<!-- Tree Container -->
+<section id="tree" class="animate-in stagger-4">
+  <div class="empty-state">
+    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
+    </svg>
+    <p class="font-medium mb-1">No BOM data loaded</p>
+    <p class="text-sm">Paste your data above or load sample data to get started</p>
+  </div>
+</section>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <span id="toast-message">Copied to clipboard</span>
+</div>
 
 <script>
+// State
+let treeData = [];
+let nodeCount = 0;
+let assemblyCount = 0;
+let leafCount = 0;
+let maxDepth = 0;
+
+// Sample data
+const sampleData = `BOM\tLevel\t\t\tComponent\tDescription\tQty\t\tUoM
+ASSY-001\t1\t\t\tMAIN-ASSEMBLY\tMain Product Assembly\t1\t\tEA
+\tPART-100\t2\t\t\tFrame Assembly\t1\t\tEA
+\t\tBRKT-101\t3\t\tMounting Bracket\t4\t\tEA
+\t\tFAST-102\t3\t\tM4x10 Screw\t16\t\tEA
+\t\tWASH-103\t3\t\tM4 Washer\t32\t\tEA
+\tPART-200\t2\t\t\tMotor Assembly\t1\t\tEA
+\t\tMOTR-201\t3\t\tDC Motor 12V\t1\t\tEA
+\t\tCABL-202\t3\t\tPower Cable\t1\t\tM
+\t\tCONN-203\t3\t\tConnector Plug\t2\t\tEA
+\tPART-300\t2\t\t\tControl Board Assembly\t1\t\tEA
+\t\tPCBA-301\t3\t\tMain PCB\t1\t\tEA
+\t\tIC-302\t4\t\tMicrocontroller\t1\t\tEA
+\t\tIC-303\t4\t\tVoltage Regulator\t3\t\tEA
+\t\tRES-304\t4\t\tResistor 10K\t8\t\tEA
+\t\tCAP-305\t4\t\tCapacitor 100uF\t4\t\tEA
+\tPART-400\t2\t\t\tEnclosure Assembly\t1\t\tEA
+\t\tCASE-401\t3\t\tTop Cover\t1\t\tEA
+\t\tCASE-402\t3\t\tBottom Cover\t1\t\tEA
+\t\tGASK-403\t3\t\tSilicone Gasket\t1\t\tEA
+\t\tFAST-404\t3\t\tM3x8 Screw\t6\t\tEA`;
+
+// Load sample data
+function loadSampleData() {
+  document.getElementById('data').value = sampleData;
+  showToast('Sample data loaded');
+}
+
+// Clear all
+function clearAll() {
+  document.getElementById('data').value = '';
+  document.getElementById('tree').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
+      </svg>
+      <p class="font-medium mb-1">No BOM data loaded</p>
+      <p class="text-sm">Paste your data above or load sample data to get started</p>
+    </div>`;
+  document.getElementById('stats').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  treeData = [];
+}
+
+// Parse and build tree
 function buildTree() {
+  const raw = document.getElementById('data').value.trim();
+  if (!raw) {
+    showToast('Please enter BOM data');
+    return;
+  }
 
-  const raw = document.getElementById("data").value.trim();
-  const lines = raw.split("\n");
+  const lines = raw.split('\n');
+  let rows = lines.map(l => l.split('\t'));
 
-  let rows = lines.map(l => l.split("\t"));
+  // Remove header
+  if (rows[0] && rows[0][1] && rows[0][1].trim() === 'Level') rows.shift();
 
-  // remove header
-  if (rows[0][1] === "Level") rows.shift();
+  // Reset counters
+  nodeCount = 0;
+  assemblyCount = 0;
+  leafCount = 0;
+  maxDepth = 0;
+  treeData = [];
 
-  const container = document.getElementById("tree");
-  container.innerHTML = "";
-
-  const root = document.createElement("ul");
-  container.appendChild(root);
-
-  // Track last node for each level
-  let levelMap = {};
-  levelMap[0] = root;
-
+  // Parse rows
   rows.forEach(r => {
+    const level = parseInt(r[1]);
+    if (!level && level !== 0) return;
 
-    let level = parseInt(r[1]);
-    if (!level) return;
-
-    let comp = r[4];
-    let desc = r[5];
-    let qty = r[6];
-    let uom = r[8];
-
-    const li = document.createElement("li");
-
-    const span = document.createElement("span");
-    span.className = "node level"+level;
-    span.textContent =
-      "▶ L"+level+" | "+comp+" - "+desc+" (Qty: "+qty+" "+uom+")";
-
-    const childUL = document.createElement("ul");
-    childUL.classList.add("hidden");
-
-    span.onclick = (e)=>{
-      e.stopPropagation();
-      childUL.classList.toggle("hidden");
+    const item = {
+      level: level,
+      component: r[4] || 'N/A',
+      description: r[5] || '',
+      qty: r[6] || '0',
+      uom: r[8] || 'EA',
+      children: [],
+      hasChildren: false
     };
 
-    li.appendChild(span);
-    li.appendChild(childUL);
+    maxDepth = Math.max(maxDepth, level);
+    treeData.push(item);
+  });
 
-    // find correct parent
-    let parentUL = levelMap[level-1] || root;
-    parentUL.appendChild(li);
+  // Build hierarchy
+  const rootItems = [];
+  const levelMap = { 0: null };
 
-    // store this UL as parent for next level
-    levelMap[level] = childUL;
-
-    // clear deeper levels to avoid wrong nesting
-    for(let i=level+1;i<=10;i++){
-      delete levelMap[i];
+  treeData.forEach((item, index) => {
+    const parentLevel = item.level - 1;
+    
+    if (parentLevel <= 0) {
+      rootItems.push(item);
+    } else if (levelMap[parentLevel]) {
+      levelMap[parentLevel].children.push(item);
+      levelMap[parentLevel].hasChildren = true;
     }
 
+    levelMap[item.level] = item;
+  });
+
+  // Count assemblies and leafs
+  treeData.forEach(item => {
+    nodeCount++;
+    if (item.hasChildren) {
+      assemblyCount++;
+    } else {
+      leafCount++;
+    }
+  });
+
+  // Render
+  renderTree(rootItems);
+  updateStats();
+  
+  document.getElementById('stats').style.display = 'grid';
+  document.getElementById('controls').style.display = 'flex';
+}
+
+// Render tree
+function renderTree(items) {
+  const container = document.getElementById('tree');
+  container.innerHTML = '';
+  container.className = 'tree-container animate-in';
+
+  const rootList = document.createElement('ul');
+  rootList.className = 'tree-list';
+  rootList.style.maxHeight = 'none';
+  rootList.style.opacity = '1';
+
+  items.forEach((item, index) => {
+    const node = createNode(item, index);
+    rootList.appendChild(node);
+  });
+
+  container.appendChild(rootList);
+}
+
+// Create node element
+function createNode(item, index) {
+  const li = document.createElement('li');
+  li.className = 'tree-item';
+  li.dataset.component = item.component.toLowerCase();
+  li.dataset.description = item.description.toLowerCase();
+
+  const levelClass = `level-${Math.min(item.level, 6)}`;
+
+  const nodeDiv = document.createElement('div');
+  nodeDiv.className = `tree-node ${levelClass}`;
+  nodeDiv.style.animationDelay = `${index * 20}ms`;
+
+  // Toggle button
+  const toggleSpan = document.createElement('span');
+  toggleSpan.className = `node-toggle ${item.hasChildren ? '' : 'empty'}`;
+  toggleSpan.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>`;
+
+  // Level badge
+  const badge = document.createElement('span');
+  badge.className = `node-badge ${levelClass}`;
+  badge.textContent = `L${item.level}`;
+
+  // Content
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'node-content';
+
+  const componentDiv = document.createElement('div');
+  componentDiv.className = 'node-component';
+  componentDiv.innerHTML = `<code>${item.component}</code>`;
+  if (item.hasChildren) {
+    const countBadge = document.createElement('span');
+    countBadge.className = 'text-xs text-[var(--fg-muted)] font-normal';
+    countBadge.textContent = `(${item.children.length} items)`;
+    componentDiv.appendChild(countBadge);
+  }
+
+  const descDiv = document.createElement('div');
+  descDiv.className = 'node-description';
+  descDiv.textContent = item.description;
+
+  contentDiv.appendChild(componentDiv);
+  contentDiv.appendChild(descDiv);
+
+  // Qty
+  const qtyDiv = document.createElement('div');
+  qtyDiv.className = 'node-qty';
+  qtyDiv.innerHTML = `
+    <span>${item.qty}</span>
+    <span class="text-[var(--fg-muted)]">${item.uom}</span>`;
+
+  // Copy button
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-btn';
+  copyBtn.title = 'Copy component info';
+  copyBtn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>`;
+  copyBtn.onclick = (e) => {
+    e.stopPropagation();
+    const text = `${item.component}\t${item.description}\t${item.qty} ${item.uom}`;
+    navigator.clipboard.writeText(text);
+    showToast('Copied to clipboard');
+  };
+
+  nodeDiv.appendChild(toggleSpan);
+  nodeDiv.appendChild(badge);
+  nodeDiv.appendChild(contentDiv);
+  nodeDiv.appendChild(qtyDiv);
+  nodeDiv.appendChild(copyBtn);
+
+  li.appendChild(nodeDiv);
+
+  // Children
+  if (item.hasChildren) {
+    const childList = document.createElement('ul');
+    childList.className = 'tree-list';
+
+    item.children.forEach((child, i) => {
+      childList.appendChild(createNode(child, i));
+    });
+
+    li.appendChild(childList);
+
+    // Toggle click
+    nodeDiv.onclick = (e) => {
+      if (e.target.closest('.copy-btn')) return;
+      toggleSpan.classList.toggle('expanded');
+      childList.classList.toggle('expanded');
+    };
+  }
+
+  return li;
+}
+
+// Update stats
+function updateStats() {
+  document.getElementById('stat-total').textContent = nodeCount;
+  document.getElementById('stat-levels').textContent = maxDepth;
+  document.getElementById('stat-assemblies').textContent = assemblyCount;
+  document.getElementById('stat-leafs').textContent = leafCount;
+}
+
+// Search
+function handleSearch(query) {
+  const items = document.querySelectorAll('.tree-item');
+  const q = query.toLowerCase().trim();
+
+  if (!q) {
+    items.forEach(item => {
+      item.querySelector('.tree-node').classList.remove('highlighted');
+    });
+    return;
+  }
+
+  items.forEach(item => {
+    const node = item.querySelector('.tree-node');
+    const component = item.dataset.component;
+    const desc = item.dataset.description;
+    
+    if (component.includes(q) || desc.includes(q)) {
+      node.classList.add('highlighted');
+      // Expand parents
+      let parent = item.parentElement;
+      while (parent) {
+        if (parent.classList.contains('tree-list')) {
+          parent.classList.add('expanded');
+          const prevToggle = parent.previousElementSibling?.querySelector('.node-toggle');
+          if (prevToggle) prevToggle.classList.add('expanded');
+        }
+        parent = parent.parentElement;
+      }
+    } else {
+      node.classList.remove('highlighted');
+    }
   });
 }
+
+// Expand all
+function expandAll() {
+  document.querySelectorAll('.tree-list').forEach(list => {
+    list.classList.add('expanded');
+  });
+  document.querySelectorAll('.node-toggle').forEach(toggle => {
+    toggle.classList.add('expanded');
+  });
+}
+
+// Collapse all
+function collapseAll() {
+  document.querySelectorAll('.tree-list').forEach((list, index) => {
+    if (index > 0) list.classList.remove('expanded');
+  });
+  document.querySelectorAll('.node-toggle').forEach(toggle => {
+    toggle.classList.remove('expanded');
+  });
+}
+
+// Toast
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-message');
+  msgEl.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('search').value = '';
+    handleSearch('');
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+});
 </script>
 
 </body>
