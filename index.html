@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>BOM Tree Viewer</title>
+
+<style>
+body { font-family: Arial; margin:20px; }
+textarea { width:100%; height:200px; }
+button { padding:10px 20px; font-size:16px; }
+
+ul { list-style-type:none; padding-left:20px; }
+li { margin:4px 0; }
+
+.node {
+  padding:4px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  display:inline-block;
+}
+
+.level1 { background:#d0e7ff; }
+.level2 { background:#d4f4dd; }
+.level3 { background:#fff3cd; }
+.level4 { background:#f8d7da; }
+.level5 { background:#e2e3ff; }
+.level6 { background:#e9ecef; }
+
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+
+<h2>BOM Tree Generator (Fixed)</h2>
+
+<textarea id="data"></textarea>
+<br>
+<button onclick="buildTree()">Generate BOM Tree</button>
+
+<div id="tree"></div>
+
+<script>
+function buildTree() {
+
+  const raw = document.getElementById("data").value.trim();
+  const lines = raw.split("\n");
+
+  let rows = lines.map(l => l.split("\t"));
+
+  // remove header
+  if (rows[0][1] === "Level") rows.shift();
+
+  const container = document.getElementById("tree");
+  container.innerHTML = "";
+
+  const root = document.createElement("ul");
+  container.appendChild(root);
+
+  // Track last node for each level
+  let levelMap = {};
+  levelMap[0] = root;
+
+  rows.forEach(r => {
+
+    let level = parseInt(r[1]);
+    if (!level) return;
+
+    let comp = r[4];
+    let desc = r[5];
+    let qty = r[6];
+    let uom = r[8];
+
+    const li = document.createElement("li");
+
+    const span = document.createElement("span");
+    span.className = "node level"+level;
+    span.textContent =
+      "▶ L"+level+" | "+comp+" - "+desc+" (Qty: "+qty+" "+uom+")";
+
+    const childUL = document.createElement("ul");
+    childUL.classList.add("hidden");
+
+    span.onclick = (e)=>{
+      e.stopPropagation();
+      childUL.classList.toggle("hidden");
+    };
+
+    li.appendChild(span);
+    li.appendChild(childUL);
+
+    // find correct parent
+    let parentUL = levelMap[level-1] || root;
+    parentUL.appendChild(li);
+
+    // store this UL as parent for next level
+    levelMap[level] = childUL;
+
+    // clear deeper levels to avoid wrong nesting
+    for(let i=level+1;i<=10;i++){
+      delete levelMap[i];
+    }
+
+  });
+}
+</script>
+
+</body>
+</html>
