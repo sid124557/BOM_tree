@@ -129,6 +129,55 @@
     }
     
     .hidden-node { display: none !important; }
+
+    /* Contains Section Table Styling */
+    .contains-table {
+        width: 100%;
+        font-size: 0.75rem;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .contains-table thead {
+        position: sticky;
+        top: 0;
+        background: var(--bg-panel);
+        z-index: 10;
+    }
+    .contains-table th {
+        padding: 8px 12px;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+    }
+    .contains-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-main);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+    }
+    .contains-table tbody tr {
+        transition: background-color 0.15s ease;
+        cursor: pointer;
+    }
+    .contains-table tbody tr:hover {
+        background-color: var(--bg-hover);
+    }
+    .contains-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .contains-table-wrapper {
+        max-height: 400px;
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-panel);
+    }
 </style>
 </head>
 <body>
@@ -230,8 +279,33 @@
                     </div>
                     
                     <div id="childrenSection" class="mt-6 hidden">
-                         <h3 class="text-sm font-semibold text-white mb-3">Contains</h3>
-                         <div id="childrenList" class="flex flex-wrap gap-2"></div>
+                         <h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            Contains <span class="text-[var(--text-muted)] font-normal ml-1" id="childrenCount">(0 components)</span>
+                         </h3>
+                         <div class="contains-table-wrapper">
+                            <table class="contains-table">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Material Description</th>
+                                        <th>Plant</th>
+                                        <th>Usage</th>
+                                        <th>Alternative</th>
+                                        <th>Base Qty</th>
+                                        <th>Component</th>
+                                        <th>Component Desc</th>
+                                        <th>Material Type</th>
+                                        <th>Alt Text</th>
+                                        <th>Quantity</th>
+                                        <th>Unit</th>
+                                        <th>Stor. Loc.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="childrenTableBody">
+                                </tbody>
+                            </table>
+                         </div>
                     </div>
                 </div>
                 
@@ -364,7 +438,16 @@ function processData() {
             children: [],
             parent: null,
             path: [], // Breadcrumbs
-            extendedQty: 0 // Will calc later
+            extendedQty: 0, // Will calc later
+            // Additional fields for "Contains" table
+            material: r[0] ? r[0].trim() : '',
+            plant: r[2] ? r[2].trim() : '',
+            usage: r[3] ? r[3].trim() : '',
+            alternative: '',
+            baseQuantity: parseFloat(r[6]) || 0,
+            materialType: '',
+            altText: '',
+            storageLocation: ''
         };
         rawData.push(item);
     });
@@ -567,14 +650,32 @@ function updateDetails(data) {
         <tr class="group hover:bg-[var(--bg-hover)] transition-colors"><td class="p-3 text-[var(--text-muted)]">Child Count</td><td class="p-3 text-white">${data.children.length}</td></tr>
     `;
     
-    // Children List (if assembly)
+    // Children List (if assembly) - Now as enhanced table
     const childrenSection = document.getElementById('childrenSection');
-    const childrenList = document.getElementById('childrenList');
+    const childrenTableBody = document.getElementById('childrenTableBody');
+    const childrenCount = document.getElementById('childrenCount');
+    
     if (data.children.length > 0) {
         childrenSection.classList.remove('hidden');
-        childrenList.innerHTML = data.children.map(c => 
-            `<button onclick="selectNode('${c.id}')" class="px-2 py-1 bg-[var(--bg-panel)] border border-[var(--border)] rounded text-xs text-[var(--text-muted)] hover:text-white hover:border-[var(--accent)] transition-colors">${c.component}</button>`
-        ).join('');
+        childrenCount.textContent = `(${data.children.length} component${data.children.length !== 1 ? 's' : ''})`;
+        
+        childrenTableBody.innerHTML = data.children.map(c => `
+            <tr onclick="selectNode('${c.id}')">
+                <td>${c.material || '-'}</td>
+                <td>${c.description || '-'}</td>
+                <td>${c.plant || '-'}</td>
+                <td>${c.usage || '-'}</td>
+                <td>${c.alternative || '-'}</td>
+                <td>${c.baseQuantity || '-'}</td>
+                <td>${c.component}</td>
+                <td>${c.description || '-'}</td>
+                <td>${c.materialType || '-'}</td>
+                <td>${c.altText || '-'}</td>
+                <td>${c.qty}</td>
+                <td>${c.uom}</td>
+                <td>${c.storageLocation || '-'}</td>
+            </tr>
+        `).join('');
     } else {
         childrenSection.classList.add('hidden');
     }
