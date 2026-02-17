@@ -3,1129 +3,589 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOM Explorer Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
+<title>BOM Tree Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --bg-main: #0a0e1a;
-        --bg-panel: #151b2e;
-        --bg-card: #1a2235;
-        --bg-hover: #242d42;
-        --border: #2d3752;
-        --border-light: #3d4967;
-        --accent: #3b82f6;
-        --accent-hover: #2563eb;
-        --accent-light: #60a5fa;
-        --accent-glow: rgba(59, 130, 246, 0.15);
-        --success: #10b981;
-        --warning: #f59e0b;
-        --text-main: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #94a3b8;
-        --guide-line: #2d3752;
-        --shadow: rgba(0, 0, 0, 0.3);
-    }
+:root {
+  --bg:#07090f; --panel:#0d1117; --card:#111822; --hover:#161f2e;
+  --fg:#e2eaf5; --fg2:#8a9ab8; --fg3:#3d4f68;
+  --accent:#00c896; --accent-bg:rgba(0,200,150,.1); --accent-bd:rgba(0,200,150,.3);
+  --bd:rgba(255,255,255,.06); --bd2:rgba(255,255,255,.1);
+  --l1:#00c896; --l1b:rgba(0,200,150,.14);
+  --l2:#3b82f6; --l2b:rgba(59,130,246,.14);
+  --l3:#a78bfa; --l3b:rgba(167,139,250,.14);
+  --l4:#f59e0b; --l4b:rgba(245,158,11,.14);
+  --l5:#ec4899; --l5b:rgba(236,72,153,.14);
+  --l6:#64748b; --l6b:rgba(100,116,139,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;display:grid;grid-template-columns:320px 1fr;height:100vh;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;z-index:0;}
 
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+/* SIDEBAR */
+.sidebar{position:relative;z-index:1;background:var(--panel);border-right:1px solid var(--bd2);display:flex;flex-direction:column;overflow:hidden;}
+.sb-head{padding:20px 20px 14px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+.logo-box{width:28px;height:28px;background:var(--accent);border-radius:5px;display:grid;place-items:center;flex-shrink:0;}
+.logo-box svg{color:#000;}
+h1{font-size:17px;font-weight:800;letter-spacing:-.02em;}
+h1 span{color:var(--accent);}
+.sb-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--fg3);letter-spacing:.06em;text-transform:uppercase;}
 
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(135deg, var(--bg-main) 0%, #0f1419 100%);
-        color: var(--text-main);
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
+.sb-input{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.inp-label{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.mono-tag{font-family:'IBM Plex Mono',monospace;font-size:8px;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:3px;}
+textarea{width:100%;min-height:110px;background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:7px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;padding:9px 11px;resize:vertical;transition:border-color .2s,box-shadow .2s;}
+textarea:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);}
+textarea::placeholder{color:var(--fg3);}
+.btn-row{display:flex;gap:6px;margin-top:9px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:5px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;transition:all .15s;border:none;white-space:nowrap;}
+.btn-p{background:var(--accent);color:#000;flex:1;}
+.btn-p:hover{background:#00dfb8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,200,150,.35);}
+.btn-g{background:rgba(255,255,255,.05);color:var(--fg2);border:1px solid var(--bd2);}
+.btn-g:hover{background:rgba(255,255,255,.09);color:var(--fg);}
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { 
-        background: #475569; 
-        border-radius: 4px;
-        transition: background 0.2s;
-    }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+.sb-nav{flex:1;overflow-y:auto;padding:10px 12px;}
+.nav-title{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;}
+.nav-empty{text-align:center;padding:24px 10px;color:var(--fg3);font-size:11px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:6px;cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent;}
+.nav-item:hover{background:var(--hover);}
+.nav-item.active{background:var(--accent-bg);border-color:var(--accent-bd);}
+.nav-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.nav-info{flex:1;min-width:0;}
+.nav-code{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-desc{font-size:10px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.nav-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;}
 
-    /* Smooth animations */
-    * {
-        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
+.sb-stats{border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);flex-shrink:0;}
+.stat-cell{background:var(--panel);padding:9px 5px;text-align:center;}
+.stat-n{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--accent);line-height:1;}
+.stat-k{font-size:8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
 
-    /* Header */
-    header {
-        background: linear-gradient(180deg, var(--bg-panel) 0%, rgba(21, 27, 46, 0.95) 100%);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px var(--shadow);
-        border-bottom: 1px solid var(--border);
-    }
+/* MAIN */
+.main{position:relative;z-index:1;display:flex;flex-direction:column;overflow:hidden;}
+.main-hdr{padding:18px 26px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0;}
+.main-title-wrap{flex:1;min-width:0;}
+.main-eyebrow{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+.main-asm-name{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.main-asm-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg2);margin-top:2px;}
+.ctrls{display:flex;align-items:center;gap:6px;}
+.sw{position:relative;}
+.sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--fg3);pointer-events:none;}
+.search{background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:6px;padding:7px 10px 7px 28px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;width:190px;transition:all .2s;}
+.search:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);width:230px;}
+.ic-btn{width:30px;height:30px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--bd2);border-radius:5px;color:var(--fg3);cursor:pointer;transition:all .15s;}
+.ic-btn:hover{color:var(--fg);background:rgba(255,255,255,.08);}
 
-    .logo-badge {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-    }
+.tree-area{flex:1;overflow-y:auto;padding:18px 26px;}
 
-    /* Tree Guide Lines */
-    .tree-branch {
-        position: relative;
-        padding-left: 28px;
-    }
-    .tree-branch::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 13px;
-        width: 2px;
-        background: linear-gradient(180deg, var(--guide-line) 0%, transparent 100%);
-        transition: background 0.3s;
-    }
-    .tree-branch:last-child::before {
-        height: 20px;
-    }
-    
-    .tree-node-wrapper {
-        position: relative;
-    }
-    .tree-node-wrapper::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: -15px;
-        width: 14px;
-        height: 2px;
-        background: var(--guide-line);
-        border-radius: 2px;
-    }
-    
-    .tree-root > .tree-branch::before { display: none; }
-    .tree-root > .tree-branch > .tree-node-wrapper::before { display: none; }
+/* ASSEMBLY BLOCK */
+.asm-block{margin-bottom:18px;border:1px solid var(--bd2);border-radius:9px;overflow:hidden;background:var(--card);}
+.asm-bar{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .15s;user-select:none;}
+.asm-bar:hover{background:var(--hover);}
+.asm-accent{width:3px;height:32px;border-radius:2px;flex-shrink:0;}
+.asm-bar-info{flex:1;min-width:0;}
+.asm-bar-code{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+.asm-bar-desc{font-size:11px;color:var(--fg2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.asm-meta{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.asm-cnt{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;}
+.asm-chev{transition:transform .25s;color:var(--fg3);}
 
-    /* Node Styling */
-    .tree-node {
-        display: flex;
-        align-items: center;
-        padding: 10px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        user-select: none;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 2px solid transparent;
-        background: rgba(255, 255, 255, 0.02);
-        margin-bottom: 4px;
-    }
-    .tree-node:hover {
-        background: var(--bg-hover);
-        border-color: var(--border-light);
-        transform: translateX(2px);
-    }
-    .tree-node.active {
-        background: var(--accent-glow);
-        border-color: var(--accent);
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-        transform: translateX(4px);
-    }
-    
-    /* Icons */
-    .icon-box {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 12px;
-        border-radius: 8px;
-        background: var(--bg-card);
-        transition: all 0.2s;
-    }
-    
-    .tree-node:hover .icon-box {
-        transform: scale(1.1);
-    }
-    
-    .tree-node.active .icon-box {
-        background: rgba(59, 130, 246, 0.2);
-    }
+/* COLUMN HEADER */
+.col-hdr{display:grid;gap:6px;padding:6px 15px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--bd);}
+.col-hdr span{font-size:8px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 
-    /* Search Input */
-    .search-wrapper {
-        position: relative;
-    }
-    .search-wrapper input:focus {
-        box-shadow: 0 0 0 3px var(--accent-glow);
-    }
+/* 7-col grid: toggle | level | component | description | qty | uom | copy */
+.rg{display:grid;grid-template-columns:18px 56px 1fr 1.4fr 76px 48px 24px;gap:6px;align-items:center;}
 
-    /* Button Styles */
-    .btn-primary {
-        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        transition: all 0.2s;
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-    }
-    .btn-primary:active {
-        transform: translateY(0);
-    }
+.parts-body{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
+.parts-body.open{max-height:999999px;}
 
-    .btn-ghost {
-        transition: all 0.2s;
-    }
-    .btn-ghost:hover {
-        background: var(--bg-hover);
-        transform: translateY(-1px);
-    }
+/* PART ROW */
+.part-wrap{border-bottom:1px solid var(--bd);}
+.part-wrap:last-child{border-bottom:none;}
+.part-row{padding:7px 15px;cursor:pointer;transition:background .12s;user-select:none;}
+.part-row:hover{background:var(--hover);}
+.part-row.match{background:rgba(0,200,150,.07);outline:1px solid var(--accent-bd);outline-offset:-1px;}
 
-    /* Stats Cards */
-    .stat-card {
-        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px 20px;
-        transition: all 0.3s;
-    }
-    .stat-card:hover {
-        border-color: var(--border-light);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px var(--shadow);
-    }
+.ptog{display:grid;place-items:center;color:var(--fg3);}
+.ptog svg{transition:transform .2s;}
+.ptog.open svg{transform:rotate(90deg);}
+.ptog.leaf{opacity:.18;pointer-events:none;}
 
-    /* Modal */
-    .modal-backdrop {
-        background: rgba(10, 14, 26, 0.85);
-        backdrop-filter: blur(8px);
-        animation: fadeIn 0.2s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    .modal-content {
-        animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    @keyframes slideUp {
-        from { 
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-        }
-        to { 
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
+.lbadge{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;text-align:center;}
+.lbadge.l1{background:var(--l1b);color:var(--l1);}
+.lbadge.l2{background:var(--l2b);color:var(--l2);}
+.lbadge.l3{background:var(--l3b);color:var(--l3);}
+.lbadge.l4{background:var(--l4b);color:var(--l4);}
+.lbadge.l5{background:var(--l5b);color:var(--l5);}
+.lbadge.l6{background:var(--l6b);color:var(--l6);}
 
-    /* Resizer */
-    .resizer {
-        width: 1px;
-        background: var(--border);
-        cursor: col-resize;
-        position: relative;
-        transition: all 0.2s;
-    }
-    .resizer:hover {
-        background: var(--accent);
-        width: 3px;
-    }
-    .resizer::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: -4px;
-        right: -4px;
-    }
+.pcode{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pdesc{font-size:11px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pqty{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;text-align:right;}
+.puom{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg3);text-align:center;}
 
-    /* Badge Styles */
-    .badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
-    .badge-assembly {
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
-        color: #fbbf24;
-        border: 1px solid rgba(251, 191, 36, 0.3);
-    }
-    .badge-part {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
-        color: #60a5fa;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-    }
+.copy-btn{opacity:0;width:22px;height:22px;display:grid;place-items:center;background:transparent;border:none;border-radius:3px;color:var(--fg3);cursor:pointer;transition:all .15s;}
+.part-row:hover .copy-btn{opacity:1;}
+.copy-btn:hover{background:var(--accent-bg);color:var(--accent);}
 
-    /* Contains Table */
-    .contains-table-wrapper {
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        overflow: hidden;
-        background: var(--bg-card);
-        box-shadow: 0 4px 12px var(--shadow);
-    }
-    
-    .contains-table {
-        width: 100%;
-        font-size: 0.8rem;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
-    .contains-table thead {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--bg-panel);
-        box-shadow: 0 2px 8px var(--shadow);
-    }
-    
-    .contains-table th {
-        padding: 12px 16px;
-        text-align: left;
-        font-weight: 600;
-        font-size: 0.7rem;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border);
-        white-space: nowrap;
-    }
-    
-    .contains-table td {
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-secondary);
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.75rem;
-    }
-    
-    .contains-table tbody tr {
-        transition: all 0.2s;
-        cursor: pointer;
-        background: rgba(255, 255, 255, 0.01);
-    }
-    
-    .contains-table tbody tr:hover {
-        background: var(--bg-hover);
-        transform: scale(1.01);
-    }
-    
-    .contains-table tbody tr:last-child td {
-        border-bottom: none;
-    }
+/* CHILDREN INDENT */
+.child-wrap{overflow:hidden;max-height:0;transition:max-height .28s cubic-bezier(.4,0,.2,1);border-left:2px solid var(--bd2);margin-left:26px;background:rgba(0,0,0,.1);}
+.child-wrap.open{max-height:999999px;}
 
-    /* Details Panel */
-    .details-header {
-        background: linear-gradient(180deg, var(--bg-card) 0%, transparent 100%);
-    }
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 24px;gap:12px;color:var(--fg3);text-align:center;}
+.empty-ring{width:52px;height:52px;border:2px dashed rgba(255,255,255,.08);border-radius:12px;display:grid;place-items:center;}
+.empty-title{font-size:14px;font-weight:700;color:var(--fg2);}
+.empty-desc{font-size:12px;line-height:1.65;max-width:380px;}
 
-    .tech-data-table {
-        background: var(--bg-card);
-        border-radius: 10px;
-        border: 1px solid var(--border);
-        overflow: hidden;
-        box-shadow: 0 2px 8px var(--shadow);
-    }
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;background:var(--card);border:1px solid var(--accent-bd);color:var(--fg);padding:8px 13px;border-radius:6px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;opacity:0;transform:translateY(10px);transition:all .2s;z-index:999;pointer-events:none;}
+.toast.on{opacity:1;transform:translateY(0);}
 
-    .tech-data-table tr:hover {
-        background: var(--bg-hover);
-    }
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.13);}
 
-    /* Section Headers */
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-main);
-        margin-bottom: 16px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid var(--border);
-    }
-
-    .section-header svg {
-        color: var(--accent);
-    }
-
-    /* Empty States */
-    .empty-state {
-        animation: fadeIn 0.4s ease;
-    }
-
-    .empty-state svg {
-        opacity: 0.3;
-        filter: drop-shadow(0 4px 8px var(--shadow));
-    }
-
-    /* Loading Animation */
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    .loading {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    /* Tooltip */
-    [title] {
-        position: relative;
-    }
-
-    /* Panel Shadows */
-    .panel-shadow {
-        box-shadow: 
-            0 0 0 1px var(--border),
-            0 10px 40px var(--shadow);
-    }
-
-    /* Quantity Badge */
-    .qty-badge {
-        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        margin-left: 8px;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-    }
-
-    /* Search Highlight */
-    .search-highlight {
-        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
-        color: white;
-        padding: 2px 4px;
-        border-radius: 4px;
-        font-weight: 600;
-        box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
-    }
-
-    /* Tree Container */
-    .tree-container {
-        background: rgba(255, 255, 255, 0.01);
-        border-radius: 12px;
-        padding: 16px;
-    }
-
-    /* Breadcrumbs */
-    .breadcrumb-item {
-        transition: all 0.2s;
-    }
-    .breadcrumb-item:hover {
-        color: var(--accent-light);
-    }
-
-    /* File Upload Area */
-    .file-upload {
-        transition: all 0.2s;
-        border: 2px dashed var(--border);
-    }
-    .file-upload:hover {
-        border-color: var(--accent);
-        background: var(--accent-glow);
-    }
-
-    /* Stats Bar */
-    .stats-bar {
-        background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-panel) 100%);
-        border-radius: 8px;
-        padding: 8px 16px;
-    }
-
-    /* Toggle Arrow Animation */
-    .toggle-arrow {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+@media(max-width:860px){body{grid-template-columns:1fr;height:auto;overflow:auto;}.sidebar{height:auto;max-height:none;}.main{height:auto;}.tree-area{overflow:visible;}}
 </style>
 </head>
 <body>
 
-    <header class="h-16 flex items-center justify-between px-6 shrink-0">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl logo-badge flex items-center justify-center text-white font-bold text-lg">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                </svg>
-            </div>
-            <div>
-                <h1 class="font-bold text-xl tracking-tight text-white">BOM Explorer</h1>
-                <p class="text-xs text-[var(--text-muted)]">Professional Bill of Materials Management</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4">
-            <div class="search-wrapper relative">
-                <input type="text" id="searchInput" placeholder="Search components, descriptions..." 
-                    class="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg pl-11 pr-4 py-2.5 text-sm w-80 focus:outline-none focus:border-[var(--accent)] placeholder-[var(--text-muted)]">
-                <svg class="w-5 h-5 text-[var(--text-muted)] absolute left-4 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div>
-            
-            <div class="h-8 w-px bg-[var(--border)]"></div>
-
-            <button onclick="toggleImportModal()" class="btn-primary flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-semibold">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                Import Data
-            </button>
-            <button onclick="exportJSON()" class="btn-ghost p-2.5 text-[var(--text-muted)] hover:text-white rounded-lg" title="Export JSON">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-            </button>
-        </div>
-    </header>
-
-    <main class="flex-1 flex overflow-hidden">
-        
-        <!-- Tree Panel -->
-        <aside class="flex-1 flex flex-col min-w-[320px] max-w-[60%] bg-[var(--bg-panel)] overflow-hidden panel-shadow">
-            <div class="stats-bar m-4 flex justify-between items-center text-xs text-[var(--text-muted)]">
-                <div class="flex items-center gap-4">
-                    <span id="treeStats" class="font-medium">📦 Waiting for data...</span>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="expandAll()" class="btn-ghost p-2 rounded-lg" title="Expand All">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    <button onclick="collapseAll()" class="btn-ghost p-2 rounded-lg" title="Collapse All">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div id="treeContainer" class="flex-1 overflow-auto px-6 pb-20">
-                <div class="empty-state flex flex-col items-center justify-center h-full text-[var(--text-muted)]">
-                    <svg class="w-20 h-20 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                    </svg>
-                    <p class="text-lg font-medium mb-2">No BOM Data Loaded</p>
-                    <p class="text-sm opacity-70">Import your bill of materials to get started</p>
-                </div>
-            </div>
-        </aside>
-
-        <div class="resizer"></div>
-
-        <!-- Details Panel -->
-        <aside id="detailsPanel" class="w-[480px] bg-[var(--bg-main)] flex flex-col overflow-hidden panel-shadow">
-            <div class="empty-state h-full flex flex-col items-center justify-center text-[var(--text-muted)] p-8 text-center" id="emptyDetails">
-                <svg class="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p class="text-base font-medium mb-2">Select a Component</p>
-                <p class="text-sm opacity-70">Click any item in the tree to view its details</p>
-            </div>
-
-            <div id="contentDetails" class="hidden h-full flex flex-col">
-                <!-- Breadcrumbs -->
-                <div class="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-panel)]">
-                    <div id="breadcrumbs" class="flex items-center text-xs font-mono gap-2 flex-wrap"></div>
-                </div>
-
-                <!-- Header -->
-                <div class="details-header p-6 border-b border-[var(--border)]">
-                    <div class="flex items-start justify-between mb-3">
-                        <span id="detailBadge" class="badge badge-part">Component</span>
-                        <span id="detailLevel" class="text-xs text-[var(--text-muted)] font-mono bg-[var(--bg-card)] px-3 py-1 rounded-full">Level 3</span>
-                    </div>
-                    <h2 id="detailName" class="text-3xl font-bold text-white mb-2 font-mono tracking-tight">PART-NAME</h2>
-                    <p id="detailDesc" class="text-[var(--text-secondary)] text-sm leading-relaxed">Description goes here</p>
-                </div>
-
-                <!-- Stats -->
-                <div class="grid grid-cols-2 gap-4 p-6 border-b border-[var(--border)]">
-                    <div class="stat-card">
-                        <span class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2 font-semibold">Quantity</span>
-                        <div class="flex items-baseline gap-2">
-                            <span id="detailQty" class="text-2xl font-bold text-[var(--accent)]">0</span>
-                            <span id="detailUom" class="text-sm text-[var(--text-muted)] font-mono">EA</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2 font-semibold">Extended Qty</span>
-                        <div class="flex items-baseline gap-2">
-                            <span id="detailExtQty" class="text-2xl font-bold text-white">0</span>
-                            <span class="text-xs text-[var(--text-muted)] opacity-60">per root</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Content -->
-                <div class="flex-1 overflow-auto p-6">
-                    <!-- Technical Data -->
-                    <div class="mb-8">
-                        <div class="section-header">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            Technical Data
-                        </div>
-                        <div class="tech-data-table">
-                            <table class="w-full text-sm">
-                                <tbody class="divide-y divide-[var(--border)]" id="detailTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Contains Section -->
-                    <div id="childrenSection" class="hidden">
-                        <div class="section-header">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                            </svg>
-                            Components
-                            <span id="childrenCount" class="text-[var(--text-muted)] font-normal">(0)</span>
-                        </div>
-                        <div class="contains-table-wrapper" style="max-height: 400px; overflow: auto;">
-                            <table class="contains-table">
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th>Description</th>
-                                        <th>Plant</th>
-                                        <th>Usage</th>
-                                        <th>Alt</th>
-                                        <th>Base Qty</th>
-                                        <th>Component</th>
-                                        <th>Comp Desc</th>
-                                        <th>Type</th>
-                                        <th>Alt Text</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
-                                        <th>Stor Loc</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="childrenTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Footer Actions -->
-                <div class="p-4 border-t border-[var(--border)] bg-[var(--bg-panel)]">
-                    <button onclick="copyDetailJSON()" class="w-full py-3 rounded-lg border-2 border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:text-white hover:border-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all">
-                        <span class="flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                            Copy JSON
-                        </span>
-                    </button>
-                </div>
-            </div>
-        </aside>
-    </main>
-
-    <!-- Import Modal -->
-    <div id="importModal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-6">
-        <div class="modal-content bg-[var(--bg-panel)] border border-[var(--border)] rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden">
-            <div class="p-8">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold mb-2">Import BOM Data</h2>
-                        <p class="text-sm text-[var(--text-muted)]">Upload or paste your tab-separated bill of materials</p>
-                    </div>
-                    <button onclick="toggleImportModal()" class="text-[var(--text-muted)] hover:text-white p-2 rounded-lg hover:bg-[var(--bg-hover)]">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <div class="flex gap-4 mb-4">
-                        <label class="file-upload flex items-center gap-3 cursor-pointer bg-[var(--bg-card)] px-6 py-3 rounded-xl flex-1 justify-center">
-                            <input type="file" id="fileInput" accept=".txt,.csv,.tsv" class="hidden" onchange="handleFileUpload(this)">
-                            <svg class="w-5 h-5 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                            </svg>
-                            <span class="text-sm font-medium">Choose File</span>
-                        </label>
-                        <button onclick="loadSample()" class="px-6 py-3 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent-glow)] rounded-xl border border-[var(--border)]">
-                            Load Sample
-                        </button>
-                    </div>
-                </div>
-
-                <textarea id="rawInput" 
-                    class="w-full h-80 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6 font-mono text-xs text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-glow)] resize-none" 
-                    placeholder="Paste tab-separated BOM data here...
-
-Format: Level | Component | Description | Qty | UoM
-
-Example:
-1    ASSY-001    Main Assembly    1    EA
-2    PART-100    Component A      2    EA"></textarea>
-                
-                <div class="mt-6 flex justify-end gap-4">
-                    <button onclick="toggleImportModal()" class="px-6 py-3 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-hover)]">
-                        Cancel
-                    </button>
-                    <button onclick="processData()" class="btn-primary px-8 py-3 rounded-lg text-white text-sm font-bold">
-                        Build Tree
-                    </button>
-                </div>
-            </div>
-        </div>
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="logo">
+      <div class="logo-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><line x1="17.5" y1="10.5" x2="17.5" y2="14"/>
+          <line x1="14" y1="17.5" x2="17.5" y2="17.5"/><line x1="21" y1="17.5" x2="17.5" y2="17.5"/>
+        </svg>
+      </div>
+      <h1>BOM <span>Viewer</span></h1>
     </div>
+    <div class="sb-sub">Bill of Materials — Interactive Tree</div>
+  </div>
+
+  <div class="sb-input">
+    <div class="inp-label">
+      <span>Paste BOM Data</span>
+      <span class="mono-tag">tab-separated</span>
+    </div>
+    <textarea id="raw" placeholder="Paste SAP BOM export here...&#10;&#10;Expected columns:&#10;Plant | Level | Material | Material Description&#10;| Component | Component Description | Qty | Qty(BUn) | UOM | ..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="go()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate
+      </button>
+      <button class="btn btn-g" onclick="loadSample()">Sample</button>
+      <button class="btn btn-g" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="sb-nav">
+    <div class="nav-title">Assemblies</div>
+    <div id="nav-list"><div class="nav-empty">No data loaded yet</div></div>
+  </div>
+
+  <div class="sb-stats" id="sb-stats" style="display:none">
+    <div class="stat-cell"><div class="stat-n" id="s-asm">0</div><div class="stat-k">Assemblies</div></div>
+    <div class="stat-cell"><div class="stat-n" id="s-rows">0</div><div class="stat-k">Total Rows</div></div>
+    <div class="stat-cell"><div class="stat-n" id="s-max">0</div><div class="stat-k">Max Depth</div></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="main-hdr">
+    <div class="main-title-wrap">
+      <div class="main-eyebrow">Viewing</div>
+      <div class="main-asm-name" id="hdr-name" style="color:var(--fg3)">No assembly selected</div>
+      <div class="main-asm-code" id="hdr-code">Load data to begin</div>
+    </div>
+    <div class="ctrls">
+      <div class="sw">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search" id="search" type="text" placeholder="Search components…" oninput="doSearch(this.value)">
+      </div>
+      <button class="ic-btn" title="Expand all" onclick="expandAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+      <button class="ic-btn" title="Collapse all" onclick="collapseAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="tree-area" id="tree">
+    <div class="empty">
+      <div class="empty-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
+      <div class="empty-title">No BOM data loaded</div>
+      <div class="empty-desc">Paste your SAP BOM export and click Generate.<br><br>Each unique <strong>Material</strong> (col 3) becomes its own collapsible assembly block. The <strong>Level</strong> column (col 2) drives the hierarchy depth.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">Copied</span>
+</div>
 
 <script>
-// --- State Management ---
-let rawData = [];
-let treeStructure = [];
-let flatMap = new Map();
-let selectedNodeId = null;
+/* ─── PALETTE ─── */
+const COLORS=['#00c896','#3b82f6','#a78bfa','#f59e0b','#ec4899','#10b981','#f97316','#06b6d4','#84cc16','#e879f9'];
 
-// --- Sample Data ---
-const sampleData = `BOM\tLevel\t\t\tComponent\tDescription\tQty\t\tUoM
-ASSY-001\t1\t\t\tMAIN-ROBOT-ARM\t6-Axis Robotic Arm Assembly\t1\t\tEA
-\tPART-100\t2\t\t\tBASE-FRAME-01\tHeavy Duty Steel Base\t1\t\tEA
-\t\tBRKT-101\t3\t\tMNT-BRACKET-A\tL-Shape Mounting Bracket\t4\t\tEA
-\t\tFAST-102\t3\t\tSCREW-M4-10\tM4x10 Hex Socket Screw\t16\t\tEA
-\t\tWASH-103\t3\t\tWASHER-M4\tM4 Split Lock Washer\t32\t\tEA
-\tPART-200\t2\t\t\tACTUATOR-ASSY\tMain Axis Actuator Unit\t1\t\tEA
-\t\tMOTR-201\t3\t\tDC-SERVO-12V\tHigh Torque DC Servo\t1\t\tEA
-\t\tCABL-202\t3\t\tPOWER-HARNESS\tShielded Power Cable 2m\t1\t\tM
-\t\tGEAR-BOX\t3\t\tGEARBOX-20:1\tPlanetary Gearbox Assembly\t1\t\tEA
-\t\t\tGEAR-A\t4\t\tSUN-GEAR\tSteel Sun Gear 12T\t1\t\tEA
-\t\t\tGEAR-B\t4\t\tPLANET-GEAR\tBrass Planet Gear 24T\t3\t\tEA
-\t\t\tRING-C\t4\t\tRING-GEAR\tInternal Ring Gear\t1\t\tEA
-\tPART-300\t2\t\t\tELEC-MODULE\tControl Electronics Box\t1\t\tEA
-\t\tPCBA-301\t3\t\tMAIN-CONTROLLER\tPCB Assembly v2.4\t1\t\tEA
-\t\tIC-302\t4\t\tMCU-ARM-M4\tMicrocontroller Unit\t1\t\tEA
-\t\tIC-303\t4\t\tV-REG-5V\tVoltage Regulator 5V\t3\t\tEA
-\t\tRES-SET\t4\t\tRESISTOR-KIT\tStandard 0603 Resistors\t1\t\tEA`;
+/* ─── STATE ─── */
+let assemblies=[];
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    toggleImportModal();
+/* ════════════════════════════════════════════
+   PARSE
+   Tab-separated SAP BOM format:
+   col0=Plant  col1=Level  col2=Material  col3=MatDesc
+   col4=Component  col5=CompDesc  col6=Qty  col7=QtyBUn  col8=UOM
+════════════════════════════════════════════ */
+function parseData(raw){
+  const lines=raw.trim().split('\n');
+  let start=0;
+  // skip header row if present
+  const h=lines[0].split('\t');
+  if(h[1]==='Level'||h[2]==='Material'||isNaN(parseInt(h[1]))){start=1;}
+
+  const asmMap=new Map(); // material → asm object
+  let colorIdx=0;
+
+  for(let i=start;i<lines.length;i++){
+    const c=lines[i].split('\t');
+    if(c.length<6) continue;
+
+    const level    =parseInt((c[1]||'').trim());
+    const material =(c[2]||'').trim();
+    const matDesc  =(c[3]||'').trim();
+    const component=(c[4]||'').trim();
+    const compDesc =(c[5]||'').trim();
+    const qty      =(c[6]||'').trim().replace(/,/g,'');
+    const uom      =(c[8]||'').trim();
+
+    if(isNaN(level)||!material||!component) continue;
+
+    if(!asmMap.has(material)){
+      asmMap.set(material,{
+        material, description:matDesc,
+        color:COLORS[colorIdx%COLORS.length],
+        rows:[]
+      });
+      colorIdx++;
+    }
+    const asm=asmMap.get(material);
+    if(!asm.description&&matDesc) asm.description=matDesc;
+    asm.rows.push({level,component,description:compDesc,qty,uom,id:uid()});
+  }
+
+  return [...asmMap.values()];
+}
+
+/* ════════════════════════════════════════════
+   BUILD HIERARCHY
+   Key rule: after placing a node at level N,
+   clear all stack entries > N so the next node
+   at the same level doesn't get parented to a
+   sibling's deeper chain.
+════════════════════════════════════════════ */
+function buildTree(rows){
+  const nodes=rows.map(r=>({...r,children:[],hasChildren:false}));
+  const roots=[];
+  const stack={};  // level → last node placed there
+
+  for(const node of nodes){
+    let parent=null;
+    for(let l=node.level-1;l>=1;l--){
+      if(stack[l]){parent=stack[l];break;}
+    }
+    if(parent){parent.children.push(node);parent.hasChildren=true;}
+    else{roots.push(node);}
+    stack[node.level]=node;
+    // prune deeper levels
+    Object.keys(stack).forEach(k=>{if(+k>node.level)delete stack[k];});
+  }
+  return roots;
+}
+
+/* ─── ENTRY POINT ─── */
+function go(){
+  const raw=document.getElementById('raw').value;
+  if(!raw.trim()){toast('No data entered');return;}
+  assemblies=parseData(raw);
+  if(!assemblies.length){toast('Could not parse any assemblies');return;}
+  assemblies.forEach(a=>{a.tree=buildTree(a.rows);});
+  renderNav();
+  renderAll();
+  updateStats();
+}
+
+/* ─── NAV ─── */
+function renderNav(){
+  const el=document.getElementById('nav-list');
+  el.innerHTML='';
+  assemblies.forEach((asm,idx)=>{
+    const total=countNodes(asm.tree);
+    const item=document.createElement('div');
+    item.className='nav-item';
+    item.dataset.idx=idx;
+    item.innerHTML=`
+      <div class="nav-dot" style="background:${asm.color}"></div>
+      <div class="nav-info">
+        <div class="nav-code">${asm.material}</div>
+        <div class="nav-desc">${asm.description||'—'}</div>
+      </div>
+      <span class="nav-badge" style="background:${asm.color}22;color:${asm.color}">${total}</span>`;
+    item.onclick=()=>{
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      item.classList.add('active');
+      const block=document.querySelector(`[data-asm="${idx}"]`);
+      if(block) block.scrollIntoView({behavior:'smooth',block:'start'});
+    };
+    el.appendChild(item);
+  });
+}
+
+function countNodes(nodes){
+  let n=0;
+  nodes.forEach(nd=>{n++;n+=countNodes(nd.children);});
+  return n;
+}
+
+/* ─── RENDER ALL ─── */
+function renderAll(){
+  const area=document.getElementById('tree');
+  area.innerHTML='';
+  if(assemblies.length===1){
+    setHeader(assemblies[0].material,assemblies[0].description,assemblies[0].color);
+  }else{
+    setHeader(`${assemblies.length} Assemblies`,'All assemblies shown below','var(--accent)');
+  }
+  assemblies.forEach((asm,idx)=>area.appendChild(makeAsmBlock(asm,idx)));
+}
+
+function setHeader(name,code,color){
+  document.getElementById('hdr-name').textContent=name;
+  document.getElementById('hdr-name').style.color=color;
+  document.getElementById('hdr-code').textContent=code||'';
+}
+
+/* ─── ASSEMBLY BLOCK ─── */
+function makeAsmBlock(asm,idx){
+  const total=countNodes(asm.tree);
+  const block=document.createElement('div');
+  block.className='asm-block';
+  block.dataset.asm=idx;
+  block.style.cssText=`border-top:2px solid ${asm.color};`;
+
+  const bar=document.createElement('div');
+  bar.className='asm-bar';
+  bar.innerHTML=`
+    <div class="asm-accent" style="background:${asm.color}"></div>
+    <div class="asm-bar-info">
+      <div class="asm-bar-code">${asm.material}</div>
+      <div class="asm-bar-desc">${asm.description||'No description'}</div>
+    </div>
+    <div class="asm-meta">
+      <span class="asm-cnt" style="background:${asm.color}1a;color:${asm.color}">${total} parts</span>
+      <svg class="asm-chev" style="transform:rotate(90deg)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+
+  const colHdr=document.createElement('div');
+  colHdr.className='col-hdr rg';
+  colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
+
+  const body=document.createElement('div');
+  body.className='parts-body open';
+  body.appendChild(colHdr);
+
+  const partsDiv=document.createElement('div');
+  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color)));
+  body.appendChild(partsDiv);
+
+  bar.onclick=()=>{
+    const open=body.classList.toggle('open');
+    bar.querySelector('.asm-chev').style.transform=open?'rotate(90deg)':'rotate(0)';
+  };
+
+  block.appendChild(bar);
+  block.appendChild(body);
+  return block;
+}
+
+/* ─── PART ROW (recursive) ─── */
+function makePartWrap(node,asmColor){
+  const wrap=document.createElement('div');
+  wrap.className='part-wrap';
+  wrap.dataset.comp=(node.component||'').toLowerCase();
+  wrap.dataset.desc=(node.description||'').toLowerCase();
+  wrap.dataset.nodeId=node.id;
+
+  const lvCls=`l${Math.min(node.level,6)}`;
+
+  const row=document.createElement('div');
+  row.className='part-row rg';
+
+  const tog=document.createElement('div');
+  tog.className=`ptog${node.hasChildren?'':' leaf'}`;
+  tog.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
+
+  const lv=mk('span',`lbadge ${lvCls}`,`L${node.level}`);
+  const code=mk('div','pcode',node.component);
+  code.title=node.component;
+  const desc=mk('div','pdesc',node.description||'—');
+  desc.title=node.description;
+  const qty=mk('div','pqty',node.qty||'—');
+  const uom=mk('div','puom',node.uom||'—');
+
+  const copyBtn=document.createElement('button');
+  copyBtn.className='copy-btn';
+  copyBtn.title='Copy row';
+  copyBtn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  copyBtn.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(`${node.component}\t${node.description}\t${node.qty}\t${node.uom}`);toast('Row copied');};
+
+  [tog,lv,code,desc,qty,uom,copyBtn].forEach(c=>row.appendChild(c));
+  wrap.appendChild(row);
+
+  if(node.hasChildren){
+    const cw=document.createElement('div');
+    cw.className='child-wrap';
+    cw.style.borderLeftColor=asmColor+'55';
+    node.children.forEach(child=>cw.appendChild(makePartWrap(child,asmColor)));
+    wrap.appendChild(cw);
+    row.onclick=e=>{
+      if(e.target.closest('.copy-btn')) return;
+      const open=cw.classList.toggle('open');
+      tog.classList.toggle('open',open);
+    };
+  }
+  return wrap;
+}
+
+function mk(tag,cls,text){const e=document.createElement(tag);e.className=cls;e.textContent=text;return e;}
+
+/* ─── STATS ─── */
+function updateStats(){
+  let totalRows=0,maxD=0;
+  assemblies.forEach(a=>{totalRows+=a.rows.length;a.rows.forEach(r=>{maxD=Math.max(maxD,r.level);});});
+  document.getElementById('s-asm').textContent=assemblies.length;
+  document.getElementById('s-rows').textContent=totalRows;
+  document.getElementById('s-max').textContent=maxD;
+  document.getElementById('sb-stats').style.display='grid';
+}
+
+/* ─── SEARCH ─── */
+function doSearch(q){
+  const ql=q.toLowerCase().trim();
+  document.querySelectorAll('.part-wrap').forEach(wrap=>{
+    const row=wrap.querySelector('.part-row');
+    const hit=ql&&((wrap.dataset.comp||'').includes(ql)||(wrap.dataset.desc||'').includes(ql));
+    row.classList.toggle('match',!!hit);
+    if(hit){
+      let p=wrap.parentElement;
+      while(p){
+        if(p.classList.contains('child-wrap')){
+          p.classList.add('open');
+          const prev=p.previousElementSibling;
+          if(prev) prev.querySelector('.ptog')?.classList.add('open');
+        }
+        if(p.classList.contains('parts-body')) p.classList.add('open');
+        p=p.parentElement;
+      }
+    }
+  });
+}
+
+/* ─── EXPAND / COLLAPSE ─── */
+function expandAll(){
+  document.querySelectorAll('.child-wrap').forEach(e=>e.classList.add('open'));
+  document.querySelectorAll('.ptog:not(.leaf)').forEach(e=>e.classList.add('open'));
+  document.querySelectorAll('.parts-body').forEach(e=>e.classList.add('open'));
+  document.querySelectorAll('.asm-chev').forEach(e=>e.style.transform='rotate(90deg)');
+}
+function collapseAll(){
+  document.querySelectorAll('.child-wrap').forEach(e=>e.classList.remove('open'));
+  document.querySelectorAll('.ptog').forEach(e=>e.classList.remove('open'));
+  document.querySelectorAll('.parts-body').forEach(e=>e.classList.remove('open'));
+  document.querySelectorAll('.asm-chev').forEach(e=>e.style.transform='rotate(0deg)');
+}
+
+/* ─── HELPERS ─── */
+function uid(){return Math.random().toString(36).slice(2,9);}
+function toast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('on');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('on'),2200);
+}
+function clearAll(){
+  document.getElementById('raw').value='';
+  assemblies=[];
+  document.getElementById('tree').innerHTML=`<div class="empty"><div class="empty-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div><div class="empty-title">No BOM data loaded</div><div class="empty-desc">Paste your data and click Generate.</div></div>`;
+  document.getElementById('nav-list').innerHTML='<div class="nav-empty">No data loaded yet</div>';
+  document.getElementById('sb-stats').style.display='none';
+  setHeader('No assembly selected','Load data to begin','var(--fg3)');
+}
+
+/* ─── SAMPLE (matches real format) ─── */
+const SAMPLE=`Plant\tLevel\tMaterial\tMaterial Description\tComponent\tComponent Description\tComp. Qty(CUn)\tComp. Qty(BUn)\tUOM\tMaterial Type
+5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO00100587\tSIKAMELT-700\t39\t39\tKG\tROH
+5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS3670155F3\tHSG ASM-HL-CONDOR-RHD-RH-24V\t1\t1\tNO\tHALB
+5600\t2\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO01610254\tSEALING RING\t1\t1\tNO\tROH
+5600\t2\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO07100006\tGEAR ASM-ADJUSTER-HORIZONTAL\t1\t1\tNO\tROH
+5600\t2\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS3670155F2\tREF ASSY-HL-CONDOR-RHD-RH-24V\t1\t1\tNO\tHALB
+5600\t3\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO02907174\tPIVOT BUSH\t1\t1\tNO\tROH
+5600\t3\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO01610404\tSCREW 5X DELT PT50\t1\t1\tNO\tROH
+5600\t3\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS367015516\tREF-HL-LD-CONDOR-RHD-RH\t1\t1\tNO\tHALB
+5600\t4\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS367015514\tREF-HL-LD-CONDOR-RHD-RH-2W\t1\t1\tNO\tHALB
+5600\t5\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO02801409\tBASECOAT MATERIAL\t19\t19\tG\tROH
+5600\t5\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO02801400\tSOLVENT BASECOAT-BUTYL ACETATE\t28\t28\tL\tROH
+5600\t6\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tRM01220116\tBMC 3100 7250-10A 109 LD\t617\t617\tKG\tROH
+5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS3670155F1\tLENS ASSEMBLY-HL-CONDO-RH\t1\t1\tNO\tHALB
+5600\t2\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS367013402\tREFLECTOR-TURN-CONDO-RH\t1\t1\tNO\tHALB
+5600\t3\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO02801402\tHEXAMETHYLDISILOXANE HMDSO\t60\t0.060\tG\tROH
+5600\t3\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS367013404\tREFLECTOR-TURN-CONDO-RH-1W\t1\t1\tNO\tHALB
+5600\t4\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tRM01220107\tTHERMOPLAST-PBT TORAYCON\t224\t224\tKG\tROH
+5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO02601474\tCLOSEOUT-GAP HIDER-LH\t1\t1\tNO\tROH
+5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO01303604\tVNT ASY HD LP\t2\t2\tNO\tROH
+5600\t1\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO00100587\tSIKAMELT-700\t39\t39\tKG\tROH
+5600\t1\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS3670154F3\tHSG ASM-HL-CONDOR-RHD-LH-24V\t1\t1\tNO\tHALB
+5600\t2\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO01610117\tSCREW-ADJUSTER-HORIZONTAL CAP\t1\t1\tNO\tROH
+5600\t2\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO01610118\tLEVER-ADJUSTER-MOTOR\t1\t1\tNO\tROH
+5600\t2\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS3670154F2\tREF ASSY-HL-CONDOR-RHD-LH-24V\t1\t1\tNO\tHALB
+5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO02907174\tPIVOT BUSH\t1\t1\tNO\tROH
+5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015416\tREF-HL-LD-CONDOR-RHD-LH\t1\t1\tNO\tHALB
+5600\t4\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015414\tREF-HL-LD-CONDOR-RHD-LH-2W\t1\t1\tNO\tHALB
+5600\t5\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO02801400\tSOLVENT BASECOAT-BUTYL ACETATE\t28\t28\tL\tROH
+5600\t6\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tRM01220116\tBMC 3100 7250-10A 109 LD\t638\t638\tKG\tROH
+5600\t1\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO01610017\tBRKT-MOUNTING-CONDOR HL-LH\t1\t1\tNO\tROH
+5600\t1\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS3670154F1\tLENS ASSEMBLY-HL-CONDO-LH\t1\t1\tNO\tHALB
+5600\t2\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015402\tLENS-OTR HL-CONDO-LH\t1\t1\tNO\tHALB
+5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO02801410\tUVHC3000 HARD COAT\t11\t11\tG\tROH
+5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015406\tLENS-OTR HL-CONDO-LH-1W\t1\t1\tNO\tHALB
+5600\t4\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tRM01220080\tMAKROLON AL2647 CLEAR\t474\t474\tKG\tROH
+5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO00100587\tSIKAMELT-700\t29\t29\tKG\tROH
+5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS3670109F3\tHSG ASSY-HL-VE3100-RHD-LH-24V\t1\t1\tNO\tHALB
+5600\t2\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS3670109F5\tREF ASM-HL-VE3100-HB-LH-24V\t1\t1\tNO\tHALB
+5600\t3\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010518\tREF-HIGH BEAM-VE3100-LH\t1\t1\tNO\tHALB
+5600\t4\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO02801404\tUNCLAD-AL WIRE 1.4MM DIA\t100\t0.100\tG\tROH
+5600\t4\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010522\tREF-HB-VE3100-RHD-LH-2W\t1\t1\tNO\tHALB
+5600\t5\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO02912902\tREFLECTOR-HB-VE3100-RHD-LH-1W\t1\t1\tNO\tROH
+5600\t2\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010514\tHOUSING-HEADLAMP-VE3100-LH\t1\t1\tNO\tHALB
+5600\t3\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tRM01220062\tPPTD XPP 1804 BLACK\t756\t756\tKG\tROH
+5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO00800395\tBLB-BAYONET S8 W3 PY21W 24V\t1\t1\tNO\tROH
+5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO01610236\tVENT ASSEMBLY-TUBE ARIA\t5\t5\tNO\tROH`;
+
+function loadSample(){document.getElementById('raw').value=SAMPLE;toast('Sample data loaded');}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.getElementById('search').value='';doSearch('');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='f'){e.preventDefault();document.getElementById('search').focus();}
 });
-
-// --- Modal & Data Handling ---
-function toggleImportModal() {
-    const modal = document.getElementById('importModal');
-    modal.classList.toggle('hidden');
-    if (!modal.classList.contains('hidden')) {
-        document.getElementById('rawInput').focus();
-    }
-}
-
-function loadSample() {
-    document.getElementById('rawInput').value = sampleData;
-}
-
-function handleFileUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        document.getElementById('rawInput').value = e.target.result;
-    };
-    reader.readAsText(file);
-}
-
-function processData() {
-    const raw = document.getElementById('rawInput').value.trim();
-    if (!raw) return alert("Please enter data");
-
-    const lines = raw.split('\n');
-    let rows = lines.map(l => l.split('\t'));
-
-    if (rows[0] && (rows[0][1] === 'Level' || isNaN(parseInt(rows[0][1])))) {
-        rows.shift();
-    }
-
-    rawData = [];
-    flatMap.clear();
-    
-    rows.forEach((r, idx) => {
-        const level = parseInt(r[1]);
-        if (isNaN(level)) return;
-
-        const id = `node-${idx}`;
-        const item = {
-            id: id,
-            level: level,
-            component: r[4] ? r[4].trim() : 'UNKNOWN',
-            description: r[5] ? r[5].trim() : '',
-            qty: parseFloat(r[6]) || 0,
-            uom: r[8] ? r[8].trim() : 'EA',
-            children: [],
-            parent: null,
-            path: [],
-            extendedQty: 0,
-            material: r[0] ? r[0].trim() : '',
-            plant: r[2] ? r[2].trim() : '',
-            usage: r[3] ? r[3].trim() : '',
-            alternative: '',
-            baseQuantity: parseFloat(r[6]) || 0,
-            materialType: '',
-            altText: '',
-            storageLocation: ''
-        };
-        rawData.push(item);
-    });
-
-    const rootNodes = [];
-    const levelMap = {};
-
-    rawData.forEach(item => {
-        if (item.level === 1) {
-            rootNodes.push(item);
-            item.extendedQty = item.qty;
-        } else {
-            const parent = levelMap[item.level - 1];
-            if (parent) {
-                parent.children.push(item);
-                item.parent = parent;
-                item.extendedQty = parent.extendedQty * item.qty;
-            } else {
-                rootNodes.push(item); 
-                item.extendedQty = item.qty;
-            }
-        }
-        levelMap[item.level] = item;
-        flatMap.set(item.id, item);
-    });
-
-    treeStructure = rootNodes;
-    
-    rawData.forEach(item => {
-        let curr = item;
-        const path = [];
-        while(curr) {
-            path.unshift(curr.component);
-            curr = curr.parent;
-        }
-        item.path = path;
-    });
-
-    renderTree();
-    updateStats();
-    toggleImportModal();
-    
-    document.getElementById('contentDetails').classList.add('hidden');
-    document.getElementById('emptyDetails').classList.remove('hidden');
-}
-
-// --- Rendering ---
-function renderTree() {
-    const container = document.getElementById('treeContainer');
-    container.innerHTML = '';
-    
-    const rootUl = document.createElement('div');
-    rootUl.className = 'tree-root tree-container';
-    
-    treeStructure.forEach(node => {
-        rootUl.appendChild(createTreeNode(node));
-    });
-    
-    container.appendChild(rootUl);
-}
-
-function createTreeNode(node) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'tree-branch';
-    
-    const nodeEl = document.createElement('div');
-    nodeEl.className = 'tree-node-wrapper';
-    nodeEl.dataset.id = node.id;
-    nodeEl.dataset.search = `${node.component.toLowerCase()} ${node.description.toLowerCase()}`;
-
-    const content = document.createElement('div');
-    content.className = 'tree-node';
-    content.onclick = (e) => {
-        e.stopPropagation();
-        selectNode(node.id);
-        toggleCollapse(wrapper);
-    };
-
-    const icon = document.createElement('div');
-    icon.className = 'icon-box';
-    if (node.children.length > 0) {
-        icon.innerHTML = `<svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2H4z"/></svg>`;
-    } else {
-        icon.innerHTML = `<svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
-    }
-
-    const text = document.createElement('div');
-    text.className = 'flex flex-col leading-tight flex-1';
-    text.innerHTML = `
-        <div class="flex items-center gap-2">
-            <span class="font-mono text-sm text-[var(--text-main)] font-semibold node-comp">${node.component}</span>
-            ${node.qty > 1 ? `<span class="qty-badge">${node.qty}</span>` : ''}
-        </div>
-        <span class="text-xs text-[var(--text-muted)] truncate max-w-[220px]">${node.description}</span>
-    `;
-
-    const toggle = document.createElement('div');
-    toggle.className = 'ml-auto pl-3 text-[var(--text-muted)] toggle-arrow';
-    if (node.children.length > 0) {
-        toggle.innerHTML = `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>`;
-        wrapper.classList.add('has-children');
-        wrapper.dataset.expanded = 'true';
-    }
-
-    content.appendChild(icon);
-    content.appendChild(text);
-    if(node.children.length > 0) content.appendChild(toggle);
-    
-    nodeEl.appendChild(content);
-    wrapper.appendChild(nodeEl);
-
-    if (node.children.length > 0) {
-        const childrenContainer = document.createElement('div');
-        childrenContainer.className = 'tree-children';
-        node.children.forEach(child => {
-            childrenContainer.appendChild(createTreeNode(child));
-        });
-        wrapper.appendChild(childrenContainer);
-    }
-
-    return wrapper;
-}
-
-// --- Interaction ---
-function selectNode(id) {
-    document.querySelectorAll('.tree-node.active').forEach(el => el.classList.remove('active'));
-    
-    const nodeEl = document.querySelector(`.tree-node-wrapper[data-id="${id}"] > .tree-node`);
-    if(nodeEl) nodeEl.classList.add('active');
-
-    selectedNodeId = id;
-    const data = flatMap.get(id);
-    updateDetails(data);
-}
-
-function toggleCollapse(wrapper) {
-    if (!wrapper.classList.contains('has-children')) return;
-    
-    const children = wrapper.querySelector('.tree-children');
-    const toggle = wrapper.querySelector('.toggle-arrow');
-    
-    if (wrapper.dataset.expanded === 'true') {
-        children.style.display = 'none';
-        wrapper.dataset.expanded = 'false';
-        if(toggle) toggle.style.transform = 'rotate(-90deg)';
-    } else {
-        children.style.display = 'block';
-        wrapper.dataset.expanded = 'true';
-        if(toggle) toggle.style.transform = 'rotate(0deg)';
-    }
-}
-
-function updateDetails(data) {
-    document.getElementById('emptyDetails').classList.add('hidden');
-    document.getElementById('contentDetails').classList.remove('hidden');
-
-    const crumbs = document.getElementById('breadcrumbs');
-    crumbs.innerHTML = data.path.map((p, i) => 
-        `<span class="breadcrumb-item ${i === data.path.length-1 ? 'text-white font-semibold' : 'text-[var(--text-muted)]'}">${p}</span>`
-    ).join('<span class="mx-2 text-[var(--border)]">→</span>');
-
-    document.getElementById('detailName').textContent = data.component;
-    document.getElementById('detailDesc').textContent = data.description || 'No description available';
-    document.getElementById('detailLevel').textContent = `Level ${data.level}`;
-    
-    const badge = document.getElementById('detailBadge');
-    if (data.children.length > 0) {
-        badge.textContent = '📦 Assembly';
-        badge.className = 'badge badge-assembly';
-    } else {
-        badge.textContent = '🔩 Part';
-        badge.className = 'badge badge-part';
-    }
-
-    document.getElementById('detailQty').textContent = data.qty;
-    document.getElementById('detailExtQty').textContent = data.extendedQty;
-    document.getElementById('detailUom').textContent = data.uom;
-
-    const tbody = document.getElementById('detailTable');
-    tbody.innerHTML = `
-        <tr><td class="p-4 text-[var(--text-muted)] w-1/3 font-medium">Component ID</td><td class="p-4 text-white font-mono">${data.component}</td></tr>
-        <tr><td class="p-4 text-[var(--text-muted)] font-medium">Description</td><td class="p-4 text-white">${data.description}</td></tr>
-        <tr><td class="p-4 text-[var(--text-muted)] font-medium">Unit of Measure</td><td class="p-4 text-white font-mono">${data.uom}</td></tr>
-        <tr><td class="p-4 text-[var(--text-muted)] font-medium">Tree Level</td><td class="p-4 text-white">${data.level}</td></tr>
-        <tr><td class="p-4 text-[var(--text-muted)] font-medium">Child Count</td><td class="p-4 text-white">${data.children.length}</td></tr>
-    `;
-    
-    const childrenSection = document.getElementById('childrenSection');
-    const childrenTableBody = document.getElementById('childrenTableBody');
-    const childrenCount = document.getElementById('childrenCount');
-    
-    if (data.children.length > 0) {
-        childrenSection.classList.remove('hidden');
-        childrenCount.textContent = `(${data.children.length})`;
-        
-        childrenTableBody.innerHTML = data.children.map(c => `
-            <tr onclick="selectNode('${c.id}')">
-                <td>${c.material || '—'}</td>
-                <td>${c.description || '—'}</td>
-                <td>${c.plant || '—'}</td>
-                <td>${c.usage || '—'}</td>
-                <td>${c.alternative || '—'}</td>
-                <td>${c.baseQuantity || '—'}</td>
-                <td class="font-semibold text-[var(--accent-light)]">${c.component}</td>
-                <td>${c.description || '—'}</td>
-                <td>${c.materialType || '—'}</td>
-                <td>${c.altText || '—'}</td>
-                <td class="font-semibold">${c.qty}</td>
-                <td>${c.uom}</td>
-                <td>${c.storageLocation || '—'}</td>
-            </tr>
-        `).join('');
-    } else {
-        childrenSection.classList.add('hidden');
-    }
-}
-
-function updateStats() {
-    const total = rawData.length;
-    const assemblies = rawData.filter(i => i.children.length > 0).length;
-    document.getElementById('treeStats').textContent = `📦 ${total} Items • 🔧 ${assemblies} Assemblies • 🔩 ${total - assemblies} Parts`;
-}
-
-function expandAll() {
-    document.querySelectorAll('.tree-branch.has-children').forEach(el => {
-        el.dataset.expanded = 'true';
-        el.querySelector('.tree-children').style.display = 'block';
-        const toggle = el.querySelector('.toggle-arrow');
-        if(toggle) toggle.style.transform = 'rotate(0deg)';
-    });
-}
-
-function collapseAll() {
-    document.querySelectorAll('.tree-branch.has-children').forEach(el => {
-        el.dataset.expanded = 'false';
-        el.querySelector('.tree-children').style.display = 'none';
-        const toggle = el.querySelector('.toggle-arrow');
-        if(toggle) toggle.style.transform = 'rotate(-90deg)';
-    });
-}
-
-// --- Search / Filter ---
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase().trim();
-    const wrappers = document.querySelectorAll('.tree-branch');
-    const nodes = document.querySelectorAll('.tree-node-wrapper');
-
-    if (!term) {
-        wrappers.forEach(w => w.style.display = '');
-        document.querySelectorAll('.node-comp').forEach(el => {
-            const id = el.closest('.tree-node-wrapper').dataset.id;
-            el.textContent = flatMap.get(id).component;
-        });
-        return;
-    }
-
-    const matches = new Set();
-    nodes.forEach(n => {
-        if (n.dataset.search.includes(term)) {
-            matches.add(n.dataset.id);
-            const compSpan = n.querySelector('.node-comp');
-            const original = flatMap.get(n.dataset.id).component;
-            const regex = new RegExp(`(${term})`, 'gi');
-            compSpan.innerHTML = original.replace(regex, '<span class="search-highlight">$1</span>');
-        } else {
-            const compSpan = n.querySelector('.node-comp');
-            compSpan.textContent = flatMap.get(n.dataset.id).component;
-        }
-    });
-
-    wrappers.forEach(w => w.style.display = 'none');
-
-    matches.forEach(id => {
-        let curr = flatMap.get(id);
-        
-        const selfWrapper = document.querySelector(`.tree-node-wrapper[data-id="${id}"]`).parentElement;
-        selfWrapper.style.display = '';
-        
-        while(curr) {
-            const nodeEl = document.querySelector(`.tree-node-wrapper[data-id="${curr.id}"]`);
-            if (nodeEl) {
-                const w = nodeEl.parentElement;
-                w.style.display = '';
-                
-                if (w.classList.contains('has-children')) {
-                   w.dataset.expanded = 'true';
-                   w.querySelector('.tree-children').style.display = 'block';
-                }
-            }
-            curr = curr.parent;
-        }
-    });
-});
-
-// --- Export ---
-function exportJSON() {
-    if (treeStructure.length === 0) return alert("No data to export");
-    
-    const clean = (nodes) => {
-        return nodes.map(n => ({
-            level: n.level,
-            component: n.component,
-            description: n.description,
-            qty: n.qty,
-            uom: n.uom,
-            children: clean(n.children)
-        }));
-    };
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(clean(treeStructure), null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "bom_export.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-}
-
-function copyDetailJSON() {
-    if (!selectedNodeId) return;
-    const n = flatMap.get(selectedNodeId);
-    const obj = {
-        component: n.component,
-        description: n.description,
-        qty: n.qty,
-        extendedQty: n.extendedQty,
-        level: n.level
-    };
-    navigator.clipboard.writeText(JSON.stringify(obj, null, 2));
-    const btn = event.target.closest('button');
-    const oldText = btn.innerHTML;
-    btn.innerHTML = `<span class="flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        Copied!
-    </span>`;
-    btn.classList.add('border-[var(--success)]', 'text-[var(--success)]');
-    setTimeout(() => {
-        btn.innerHTML = oldText;
-        btn.classList.remove('border-[var(--success)]', 'text-[var(--success)]');
-    }, 2000);
-}
 </script>
 </body>
 </html>
