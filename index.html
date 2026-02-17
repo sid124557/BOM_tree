@@ -67,6 +67,19 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 
 /* diff table */
 .diff-table-wrap{background:var(--card);border:1px solid var(--bd2);border-radius:9px;overflow:hidden;}
+.compare-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
+.compare-pane{border:1px solid var(--bd2);border-radius:9px;background:var(--card);overflow:hidden;}
+.compare-pane-head{padding:8px 11px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
+.cmp-row{display:grid;grid-template-columns:62px 1fr 64px 64px 1fr;gap:6px;padding:7px 10px;border-bottom:1px solid var(--bd);font-size:10px;align-items:center;}
+.cmp-row:last-child{border-bottom:none;}
+.cmp-status{font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;padding:2px 4px;border-radius:3px;text-transform:uppercase;text-align:center;}
+.cmp-code{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cmp-qty,.cmp-sup{font-family:'IBM Plex Mono',monospace;text-align:right;}
+.cmp-desc{color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cmp-add{background:rgba(34,197,94,.12);} .cmp-add .cmp-status{background:rgba(34,197,94,.16);color:#22c55e;}
+.cmp-del{background:rgba(239,68,68,.12);} .cmp-del .cmp-status{background:rgba(239,68,68,.16);color:#ef4444;}
+.cmp-mod{background:rgba(245,158,11,.12);} .cmp-mod .cmp-status{background:rgba(245,158,11,.16);color:#f59e0b;}
+.cmp-same{background:rgba(138,154,184,.08);} .cmp-same .cmp-status{background:rgba(138,154,184,.14);color:#8a9ab8;}
 .diff-table-head{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bd);}
 .diff-table-head > div{padding:8px 14px;font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 .diff-table-head > div:not(:last-child){border-right:1px solid var(--bd);}
@@ -135,6 +148,9 @@ h1 span{color:var(--accent);}
 .sb-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--fg3);letter-spacing:.06em;text-transform:uppercase;}
 
 .sb-input{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;background:rgba(255,255,255,.01);}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
+.meta-grid input{background:rgba(0,0,0,.35);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.meta-grid input:focus{outline:none;border-color:var(--accent-bd);}
 .inp-label{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
 .mono-tag{font-family:'IBM Plex Mono',monospace;font-size:8px;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:3px;}
 textarea{width:100%;min-height:110px;background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:7px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;padding:9px 11px;resize:vertical;transition:border-color .2s,box-shadow .2s;}
@@ -146,6 +162,18 @@ textarea::placeholder{color:var(--fg3);}
 .btn-p:hover{background:#00dfb8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,200,150,.35);}
 .btn-g{background:rgba(255,255,255,.05);color:var(--fg2);border:1px solid var(--bd2);}
 .btn-g:hover{background:rgba(255,255,255,.09);color:var(--fg);}
+.quick-add{background:rgba(255,255,255,.02);border:1px solid var(--bd2);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.quick-add textarea{min-height:70px;max-height:110px;}
+.quick-add small{font-size:9px;color:var(--fg3);line-height:1.4;}
+
+.bom-library{padding:10px 14px;border-bottom:1px solid var(--bd);max-height:170px;overflow:auto;}
+.bom-lib-item{display:flex;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--bd);border-radius:7px;margin-bottom:6px;background:rgba(255,255,255,.02);}
+.bom-lib-item button{border:none;background:rgba(255,255,255,.06);color:var(--fg2);font-size:10px;border-radius:4px;padding:4px 7px;cursor:pointer;}
+.bom-lib-item button:hover{background:rgba(255,255,255,.12);color:var(--fg);}
+
+.bulk-edit{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;}
+.bulk-edit select,.bulk-edit input{background:rgba(0,0,0,.35);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.bulk-edit .btn-row{margin-top:2px;}
 
 .sb-nav{flex:1;overflow-y:auto;padding:10px 12px;}
 .nav-title{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;}
@@ -292,6 +320,12 @@ textarea::placeholder{color:var(--fg3);}
   </div>
 
   <div class="sb-input">
+    <div class="meta-grid">
+      <input id="meta-project" placeholder="Project Name">
+      <input id="meta-version" placeholder="Version / Revision">
+      <input id="meta-date" type="date">
+      <input id="meta-supplier" placeholder="Default Supplier">
+    </div>
     <div class="inp-label">
       <span>Paste BOM Data</span>
       <span class="mono-tag">tab-separated</span>
@@ -305,6 +339,28 @@ textarea::placeholder{color:var(--fg3);}
       <button class="btn btn-g" onclick="loadSample()">Sample</button>
       <button class="btn btn-g" onclick="clearAll()">Clear</button>
     </div>
+    <div class="quick-add">
+      <div class="inp-label" style="margin-bottom:0"><span>Rapid Entry</span><span class="mono-tag">part	qty	desc	supplier</span></div>
+      <textarea id="quick-add" placeholder="BO1001	2	BRACKET	ABC SUPPLIER"></textarea>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn btn-g" onclick="quickAddRows()">Quick-Add</button>
+        <button class="btn btn-g" onclick="saveCurrentBom()">Save BOM</button>
+      </div>
+      <small>Press <strong>Tab</strong> between fields and <strong>Enter</strong> for next row, then Quick-Add.</small>
+    </div>
+  </div>
+
+  <div class="bom-library">
+    <div class="nav-title">BOM Versions</div>
+    <div id="bom-library"><div class="nav-empty">No saved BOM versions</div></div>
+  </div>
+
+  <div class="bulk-edit">
+    <div class="nav-title" style="margin:0">Bulk Actions</div>
+    <select id="bulk-target"><option value="">Select loaded assembly</option></select>
+    <input id="bulk-supplier" placeholder="Set supplier for all rows">
+    <input id="bulk-qty-factor" type="number" step="0.01" min="0" placeholder="Multiply qty (e.g. 1.1)">
+    <div class="btn-row"><button class="btn btn-g" onclick="applyBulkEdit()">Apply Bulk Edit</button></div>
   </div>
 
   <div class="sb-nav">
@@ -388,7 +444,7 @@ textarea::placeholder{color:var(--fg3);}
       </button>
       <button class="diff-export" id="diff-export-btn" onclick="exportDiff()" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export TSV
+        Download Comparison CSV
       </button>
     </div>
     <!-- Summary cards -->
@@ -431,6 +487,16 @@ textarea::placeholder{color:var(--fg3);}
       </div>
       <div id="diff-rows"></div>
     </div>
+    <div class="compare-split" id="compare-split" style="display:none">
+      <div class="compare-pane">
+        <div class="compare-pane-head" id="cmp-head-a">BOM A</div>
+        <div id="cmp-rows-a"></div>
+      </div>
+      <div class="compare-pane">
+        <div class="compare-pane-head" id="cmp-head-b">BOM B</div>
+        <div id="cmp-rows-b"></div>
+      </div>
+    </div>
     <!-- Empty state -->
     <div class="diff-empty" id="diff-empty-state">Select two assemblies above and click <strong>Run Comparison</strong> to see what's different between them.</div>
   </div>
@@ -447,6 +513,8 @@ const COLORS=['#00c896','#3b82f6','#a78bfa','#f59e0b','#ec4899','#10b981','#f973
 
 /* ─── STATE ─── */
 let assemblies=[];
+let bomVersions=[];
+let compareRows=[];
 
 /* ════════════════════════════════════════════
    PARSE
@@ -488,7 +556,7 @@ function parseData(raw){
     }
     const asm=asmMap.get(material);
     if(!asm.description&&matDesc) asm.description=matDesc;
-    asm.rows.push({level,component,description:compDesc,qty,uom,id:uid()});
+    asm.rows.push({level,component,description:compDesc,qty,uom,supplier:'',id:uid()});
   }
 
   return [...asmMap.values()];
@@ -526,11 +594,117 @@ function go(){
   if(!raw.trim()){toast('No data entered');return;}
   assemblies=parseData(raw);
   if(!assemblies.length){toast('Could not parse any assemblies');return;}
-  assemblies.forEach(a=>{a.tree=buildTree(a.rows);});
+
+  const project=(document.getElementById('meta-project').value||'').trim();
+  const version=(document.getElementById('meta-version').value||'').trim();
+  const date=(document.getElementById('meta-date').value||'').trim();
+  const supplier=(document.getElementById('meta-supplier').value||'').trim();
+
+  assemblies.forEach(a=>{
+    a.project=project||a.project||'Untitled';
+    a.version=version||a.version||'R1';
+    a.date=date||a.date||new Date().toISOString().slice(0,10);
+    a.rows.forEach(r=>{if(!r.supplier) r.supplier=supplier||'';});
+    a.tree=buildTree(a.rows);
+  });
   renderNav();
   renderAll();
   updateStats();
   populateDiffSelects();
+  populateBulkTargets();
+}
+
+function quickAddRows(){
+  const txt=document.getElementById('quick-add').value.trim();
+  if(!txt){toast('Quick-Add is empty');return;}
+  const project=(document.getElementById('meta-project').value||'Quick BOM').trim();
+  const version=(document.getElementById('meta-version').value||'R1').trim();
+  const date=(document.getElementById('meta-date').value||new Date().toISOString().slice(0,10)).trim();
+  const supplierDefault=(document.getElementById('meta-supplier').value||'').trim();
+  const material=`${project.replace(/\s+/g,'_').toUpperCase()}-${version}`;
+  const asm={material,description:project,color:COLORS[assemblies.length%COLORS.length],rows:[],project,version,date};
+  txt.split(/\n+/).forEach((ln,i)=>{
+    const [component,qty,description,supplier]=ln.split('\t');
+    if(!(component||'').trim()) return;
+    asm.rows.push({level:1,component:(component||'').trim(),description:(description||'').trim(),qty:(qty||'1').trim(),uom:'NO',supplier:(supplier||supplierDefault||'').trim(),id:uid()});
+  });
+  if(!asm.rows.length){toast('No valid rows in Quick-Add');return;}
+  asm.tree=buildTree(asm.rows);
+  assemblies.push(asm);
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
+  toast(`Quick-added ${asm.rows.length} rows`);
+}
+
+function saveCurrentBom(){
+  if(!assemblies.length){toast('Load or create a BOM first');return;}
+  assemblies.forEach(a=>{
+    const id=`${a.project||'P'}|${a.version||'R'}|${a.material}`;
+    const existing=bomVersions.findIndex(v=>v.id===id);
+    const snap=JSON.parse(JSON.stringify({...a,id,savedAt:new Date().toISOString()}));
+    if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
+  });
+  renderBomLibrary();
+  toast('BOM version saved');
+}
+
+function renderBomLibrary(){
+  const el=document.getElementById('bom-library');
+  if(!bomVersions.length){el.innerHTML='<div class="nav-empty">No saved BOM versions</div>';return;}
+  el.innerHTML='';
+  bomVersions.forEach((b,idx)=>{
+    const row=document.createElement('div');
+    row.className='bom-lib-item';
+    row.innerHTML=`<div class="nav-info"><div class="nav-code">${b.project||b.material} • ${b.version||''}</div><div class="nav-desc">${b.date||''} • ${b.material}</div></div>
+      <button onclick="loadSavedBom(${idx})">Load</button>
+      <button onclick="duplicateBom(${idx})">Duplicate</button>
+      <button onclick="deleteBom(${idx})">Delete</button>`;
+    el.appendChild(row);
+  });
+}
+
+function loadSavedBom(idx){
+  const b=bomVersions[idx]; if(!b) return;
+  assemblies=[JSON.parse(JSON.stringify(b))];
+  assemblies[0].color=COLORS[0];
+  assemblies[0].rows.forEach(r=>{if(!r.id) r.id=uid();});
+  assemblies[0].tree=buildTree(assemblies[0].rows);
+  document.getElementById('meta-project').value=assemblies[0].project||'';
+  document.getElementById('meta-version').value=assemblies[0].version||'';
+  document.getElementById('meta-date').value=assemblies[0].date||'';
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
+}
+
+function duplicateBom(idx){
+  const b=bomVersions[idx]; if(!b) return;
+  const cp=JSON.parse(JSON.stringify(b));
+  cp.version=(cp.version||'R1')+'-COPY';
+  cp.id=`${cp.project}|${cp.version}|${cp.material}`;
+  bomVersions.push(cp);
+  renderBomLibrary();
+  toast('Duplicated BOM version');
+}
+function deleteBom(idx){bomVersions.splice(idx,1);renderBomLibrary();}
+
+function populateBulkTargets(){
+  const sel=document.getElementById('bulk-target');
+  sel.innerHTML='<option value="">Select loaded assembly</option>';
+  assemblies.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.material} — ${a.version||''}`;sel.appendChild(o);});
+}
+
+function applyBulkEdit(){
+  const idx=document.getElementById('bulk-target').value;
+  if(idx===''){toast('Select an assembly for bulk edit');return;}
+  const sup=(document.getElementById('bulk-supplier').value||'').trim();
+  const fac=parseFloat((document.getElementById('bulk-qty-factor').value||'').trim()||'0');
+  const asm=assemblies[idx];
+  let changed=0;
+  asm.rows.forEach(r=>{
+    if(sup){r.supplier=sup;changed++;}
+    if(fac>0){const q=parseFloat(String(r.qty).replace(/,/g,'')); if(!isNaN(q)){r.qty=(q*fac).toFixed(3).replace(/\.000$/,'');changed++;}}
+  });
+  asm.tree=buildTree(asm.rows);
+  renderAll();
+  toast(`Bulk edit applied (${changed} updates)`);
 }
 
 /* ─── NAV ─── */
@@ -707,6 +881,9 @@ function doSearch(q){
       }
     }
   });
+  if(document.getElementById('diff-panel').classList.contains('visible') && compareRows.length){
+    renderCompareSplit();
+  }
 }
 
 /* ─── EXPAND / COLLAPSE ─── */
@@ -734,23 +911,28 @@ function toast(msg){
 }
 function clearAll(){
   document.getElementById('raw').value='';
+  document.getElementById('quick-add').value='';
   assemblies=[];
   lastDiffResults=[];
+  compareRows=[];
   document.getElementById('tree').innerHTML=`<div class="empty"><div class="empty-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div><div class="empty-title">No BOM data loaded</div><div class="empty-desc">Paste your data and click Generate.</div></div>`;
   document.getElementById('nav-list').innerHTML='<div class="nav-empty">No data loaded yet</div>';
   document.getElementById('sb-stats').style.display='none';
   setHeader('No assembly selected','Load data to begin','var(--fg3)');
-  // reset diff panel
   ['sel-a','sel-b'].forEach(id=>{
     const s=document.getElementById(id);
     s.innerHTML='<option value="">— Select assembly —</option>';
   });
+  document.getElementById('bulk-target').innerHTML='<option value="">Select loaded assembly</option>';
   document.getElementById('diff-summary').style.display='none';
   document.getElementById('diff-filters').style.display='none';
   document.getElementById('diff-table').style.display='none';
+  document.getElementById('compare-split').style.display='none';
   document.getElementById('diff-export-btn').style.display='none';
   document.getElementById('diff-empty-state').style.display='';
   document.getElementById('diff-rows').innerHTML='';
+  document.getElementById('cmp-rows-a').innerHTML='';
+  document.getElementById('cmp-rows-b').innerHTML='';
   switchTab('tree');
 }
 
@@ -809,6 +991,11 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){document.getElementById('search').value='';doSearch('');}
   if((e.ctrlKey||e.metaKey)&&e.key==='f'){e.preventDefault();document.getElementById('search').focus();}
 });
+const qa=document.getElementById('quick-add');
+qa?.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const t=e.target;t.setRangeText('\t',t.selectionStart,t.selectionEnd,'end');}
+});
+document.getElementById('meta-date').value=new Date().toISOString().slice(0,10);
 
 /* ════════════════════════════════════════════
    TAB SWITCHING
@@ -820,26 +1007,30 @@ function switchTab(tab){
   document.getElementById('tree').style.display = isTree ? '' : 'none';
   const dp = document.getElementById('diff-panel');
   dp.classList.toggle('visible',!isTree);
-  // hide search/expand controls when on diff tab
-  document.querySelector('.ctrls').style.display = isTree ? '' : 'none';
+  // keep global search visible in both tabs
+  document.querySelector('.ctrls').style.display = '';
 }
 
 /* ════════════════════════════════════════════
    POPULATE DIFF SELECTS (called after go())
 ════════════════════════════════════════════ */
+function getComparePool(){
+  return bomVersions.length ? bomVersions : assemblies;
+}
+
 function populateDiffSelects(){
+  const pool=getComparePool();
   ['sel-a','sel-b'].forEach(id=>{
     const sel=document.getElementById(id);
     const prev=sel.value;
-    sel.innerHTML='<option value="">— Select assembly —</option>';
-    assemblies.forEach((a,i)=>{
+    sel.innerHTML='<option value="">— Select BOM —</option>';
+    pool.forEach((a,i)=>{
       const opt=document.createElement('option');
       opt.value=i;
-      opt.textContent=`${a.material} — ${a.description||'No description'}`;
+      opt.textContent=`${a.project||a.material} ${a.version?('('+a.version+')'):''} — ${a.material}`;
       sel.appendChild(opt);
     });
-    // try to restore previous selection
-    if(prev!=='' && assemblies[prev]) sel.value=prev;
+    if(prev!=='' && pool[prev]) sel.value=prev;
   });
 }
 
@@ -863,71 +1054,46 @@ function populateDiffSelects(){
      Only RH  : 14  (mirror S3670169*, S367016512/512/912/816/906/502/504/508/510,
                       BO02912705/711, BO01610120)
 ════════════════════════════════════════════ */
-function groupByCompLevel(asm){
-  // Map keyed by "COMPCODE|LEVEL" → {comp, qty, uom, level, description}
-  // If somehow the exact same (comp,level) appears twice we keep first.
-  const map = new Map();
-  asm.rows.forEach(r => {
-    const key = r.component + '|' + r.level;
-    if(!map.has(key)){
-      map.set(key, {
-        comp: r.component,
-        qty:  r.qty,
-        uom:  r.uom,
-        level: r.level,
-        description: r.description
-      });
-    }
-  });
-  return map;
-}
-
 function parseQty(s){
-  // Remove thousands-separators (commas), parse float
   if(s==null) return 0;
   return parseFloat(String(s).replace(/,/g,'')) || 0;
 }
 
+function buildPartMap(asm){
+  const map=new Map();
+  asm.rows.forEach(r=>{
+    const key=(r.component||'').trim();
+    if(!key) return;
+    if(!map.has(key)) map.set(key,{comp:key,description:r.description||'',supplier:r.supplier||'',qty:0,uom:r.uom||'NO'});
+    const it=map.get(key);
+    it.qty += parseQty(r.qty);
+    if(!it.description && r.description) it.description=r.description;
+    if(!it.supplier && r.supplier) it.supplier=r.supplier;
+    if(!it.uom && r.uom) it.uom=r.uom;
+  });
+  return map;
+}
+
 function diffAssemblies(asmA, asmB){
-  const mapA = groupByCompLevel(asmA);
-  const mapB = groupByCompLevel(asmB);
-  const allKeys = new Set([...mapA.keys(), ...mapB.keys()]);
-  const results = [];
-
-  allKeys.forEach(key => {
-    const a = mapA.get(key) || null;
-    const b = mapB.get(key) || null;
-
-    if(a && b){
-      const qA = parseQty(a.qty);
-      const qB = parseQty(b.qty);
-      const sameQty  = Math.abs(qA - qB) < 0.0001;
-      const sameUom  = (a.uom || '') === (b.uom || '');
-      results.push({
-        key,
-        comp: a.comp,
-        level: a.level,
-        type: (sameQty && sameUom) ? 'shared' : 'qty-diff',
-        a, b
-      });
-    } else if(a){
-      results.push({ key, comp: a.comp, level: a.level, type: 'only-a', a, b: null });
-    } else {
-      results.push({ key, comp: b.comp, level: b.level, type: 'only-b', a: null, b });
+  const mapA=buildPartMap(asmA);
+  const mapB=buildPartMap(asmB);
+  const keys=[...new Set([...mapA.keys(),...mapB.keys()])].sort((a,b)=>a.localeCompare(b));
+  const rows=[];
+  keys.forEach(k=>{
+    const a=mapA.get(k)||null;
+    const b=mapB.get(k)||null;
+    if(a&&b){
+      const sameQty=Math.abs(a.qty-b.qty)<0.0001;
+      const sameSup=(a.supplier||'')===(b.supplier||'');
+      const type=(sameQty&&sameSup)?'shared':'qty-diff';
+      rows.push({comp:k,type,a:{...a,qty:String(a.qty)},b:{...b,qty:String(b.qty)}});
+    }else if(a){
+      rows.push({comp:k,type:'only-a',a:{...a,qty:String(a.qty)},b:null});
+    }else{
+      rows.push({comp:k,type:'only-b',a:null,b:{...b,qty:String(b.qty)}});
     }
   });
-
-  // Sort: unique parts first (only-a then only-b), then qty-diff, then shared
-  // Within group: by component code then level
-  const order = { 'only-a': 0, 'only-b': 1, 'qty-diff': 2, 'shared': 3 };
-  results.sort((x, y) => {
-    const od = order[x.type] - order[y.type];
-    if(od !== 0) return od;
-    const cd = x.comp.localeCompare(y.comp);
-    if(cd !== 0) return cd;
-    return (parseInt(x.level)||0) - (parseInt(y.level)||0);
-  });
-  return results;
+  return rows;
 }
 
 /* ════════════════════════════════════════════
@@ -942,15 +1108,21 @@ function runDiff(){
   if(idxA===''||idxB===''){toast('Select two assemblies to compare');return;}
   if(idxA===idxB){toast('Select two different assemblies');return;}
 
-  const asmA=assemblies[idxA];
-  const asmB=assemblies[idxB];
+  const pool=getComparePool();
+  const asmA=pool[idxA];
+  const asmB=pool[idxB];
   lastDiffResults=diffAssemblies(asmA,asmB);
+  compareRows=lastDiffResults.map(r=>({
+    comp:r.comp,
+    a:r.a,b:r.b,
+    type:r.type==='only-b'?'add':r.type==='only-a'?'del':r.type==='qty-diff'?'mod':'same'
+  }));
 
-  // update column headers
   document.getElementById('diff-col-a').innerHTML=`<span style="color:#ef4444">A</span> — ${asmA.material}`;
   document.getElementById('diff-col-b').innerHTML=`<span style="color:#22c55e">B</span> — ${asmB.material}`;
+  document.getElementById('cmp-head-a').textContent=`BOM A — ${asmA.material} (${asmA.version||''})`;
+  document.getElementById('cmp-head-b').textContent=`BOM B — ${asmB.material} (${asmB.version||''})`;
 
-  // summary counts
   const counts={shared:0,'only-a':0,'only-b':0,'qty-diff':0};
   lastDiffResults.forEach(r=>counts[r.type]++);
   document.getElementById('dc-shared').textContent=counts['shared'];
@@ -960,53 +1132,52 @@ function runDiff(){
   document.getElementById('dc-a-label').textContent=asmA.material;
   document.getElementById('dc-b-label').textContent=asmB.material;
 
-  // show/hide elements
   document.getElementById('diff-summary').style.display='grid';
   document.getElementById('diff-filters').style.display='flex';
   document.getElementById('diff-table').style.display='block';
+  document.getElementById('compare-split').style.display='grid';
   document.getElementById('diff-empty-state').style.display='none';
   document.getElementById('diff-export-btn').style.display='inline-flex';
 
   renderDiffRows();
-  toast(`Comparison complete — ${lastDiffResults.length} unique parts`);
+  renderCompareSplit();
+  toast(`Comparison complete — ${lastDiffResults.length} aligned part numbers`);
 }
 
 function renderDiffRows(){
   const container=document.getElementById('diff-rows');
   container.innerHTML='';
-
   const filtered=lastDiffResults.filter(r=>activeFilters.has(r.type));
-  if(!filtered.length){
-    container.innerHTML='<div class="diff-empty">No rows match the active filters.</div>';
-    return;
-  }
-
+  if(!filtered.length){container.innerHTML='<div class="diff-empty">No rows match the active filters.</div>';return;}
   filtered.forEach(r=>{
-    const row=document.createElement('div');
-    row.className=`diff-row ${r.type}`;
-
-    // tag labels
-    const tagText={shared:'Both','only-a':'Only A','only-b':'Only B','qty-diff':'Qty ≠'};
-
-    // build A cell — data object fields: .comp .level .description .qty .uom
-    const cellA = r.a
-      ? `<div class="diff-cell-code">${r.a.comp}<span class="dlv">L${r.a.level}</span></div>
-         <div class="diff-cell-desc">${r.a.description||'—'}</div>
-         <div class="diff-cell-qty">${r.a.qty||'—'} ${r.a.uom||''}</div>`
-      : `<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
-
-    // build B cell
-    const cellB = r.b
-      ? `<div class="diff-cell-code">${r.b.comp}<span class="dlv">L${r.b.level}</span></div>
-         <div class="diff-cell-desc">${r.b.description||'—'}</div>
-         <div class="diff-cell-qty">${r.b.qty||'—'} ${r.b.uom||''}</div>`
-      : `<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
-
-    row.innerHTML=`
-      <div class="diff-tag"><span>${tagText[r.type]}</span></div>
-      <div class="diff-cell">${cellA}</div>
-      <div class="diff-cell">${cellB}</div>`;
+    const row=document.createElement('div');row.className=`diff-row ${r.type}`;
+    const tagText={shared:'Both','only-a':'Only A','only-b':'Only B','qty-diff':'Modified'};
+    const cellA=r.a?`<div class="diff-cell-code">${r.a.comp}</div><div class="diff-cell-desc">${r.a.description||'—'}</div><div class="diff-cell-qty">${r.a.qty||'—'} ${r.a.uom||''} • ${r.a.supplier||'—'}</div>`:`<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
+    const cellB=r.b?`<div class="diff-cell-code">${r.b.comp}</div><div class="diff-cell-desc">${r.b.description||'—'}</div><div class="diff-cell-qty">${r.b.qty||'—'} ${r.b.uom||''} • ${r.b.supplier||'—'}</div>`:`<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
+    row.innerHTML=`<div class="diff-tag"><span>${tagText[r.type]}</span></div><div class="diff-cell">${cellA}</div><div class="diff-cell">${cellB}</div>`;
     container.appendChild(row);
+  });
+}
+
+function renderCompareSplit(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const typeMap={same:'shared',del:'only-a',add:'only-b',mod:'qty-diff'};
+  const rows=compareRows.filter(r=>{
+    const matchesFilter=activeFilters.has(typeMap[r.type]||'shared');
+    const matchesSearch=!q || r.comp.toLowerCase().includes(q) || (r.a?.description||'').toLowerCase().includes(q) || (r.b?.description||'').toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
+  const left=document.getElementById('cmp-rows-a');
+  const right=document.getElementById('cmp-rows-b');
+  left.innerHTML='';right.innerHTML='';
+  rows.forEach(r=>{
+    const cls=r.type==='add'?'cmp-add':r.type==='del'?'cmp-del':r.type==='mod'?'cmp-mod':'cmp-same';
+    const status=r.type==='add'?'ADD':r.type==='del'?'DEL':r.type==='mod'?'MOD':'SAME';
+    const la=document.createElement('div');la.className=`cmp-row ${cls}`;
+    const ra=document.createElement('div');ra.className=`cmp-row ${cls}`;
+    la.innerHTML=`<div class="cmp-status">${status}</div><div class="cmp-code">${r.comp}</div><div class="cmp-qty">${r.a?r.a.qty:'—'}</div><div class="cmp-sup">${r.a?(r.a.supplier||'—'):'—'}</div><div class="cmp-desc">${r.a?(r.a.description||'—'):'—'}</div>`;
+    ra.innerHTML=`<div class="cmp-status">${status}</div><div class="cmp-code">${r.comp}</div><div class="cmp-qty">${r.b?r.b.qty:'—'}</div><div class="cmp-sup">${r.b?(r.b.supplier||'—'):'—'}</div><div class="cmp-desc">${r.b?(r.b.description||'—'):'—'}</div>`;
+    left.appendChild(la);right.appendChild(ra);
   });
 }
 
@@ -1017,41 +1188,48 @@ function toggleChip(el,type){
   el.classList.toggle('on');
   if(el.classList.contains('on')) activeFilters.add(type);
   else activeFilters.delete(type);
-  if(lastDiffResults.length) renderDiffRows();
+  if(lastDiffResults.length){renderDiffRows();renderCompareSplit();}
 }
 
 /* ════════════════════════════════════════════
-   EXPORT DIFF AS TSV
+   EXPORT DIFF AS CSV
 ════════════════════════════════════════════ */
 function exportDiff(){
   if(!lastDiffResults.length) return;
   const idxA=document.getElementById('sel-a').value;
   const idxB=document.getElementById('sel-b').value;
-  const asmA=assemblies[idxA];
-  const asmB=assemblies[idxB];
+  const pool=getComparePool();
+  const asmA=pool[idxA];
+  const asmB=pool[idxB];
 
-  const lines=[
-    `Status\tComponent\tLevel\tDescription\tQty(A)\tUoM(A)\tQty(B)\tUoM(B)`
-  ];
+  const lines=[`Status,Part Number,Description A,Qty A,Supplier A,Description B,Qty B,Supplier B,Highlight`];
   lastDiffResults.forEach(r=>{
-    const tagText={shared:'BOTH','only-a':'ONLY_A','only-b':'ONLY_B','qty-diff':'QTY_DIFF'};
-    const aL=r.a?r.a.level:'';const aQ=r.a?r.a.qty:'';const aU=r.a?r.a.uom:'';
-    const bL=r.b?r.b.level:'';const bQ=r.b?r.b.qty:'';const bU=r.b?r.b.uom:'';
-    const desc=(r.a||r.b).description||'';
-    const comp=r.comp||'';
-    const lvl=r.level||'';
-    lines.push(`${tagText[r.type]}\t${comp}\tL${lvl}\t${desc}\t${aQ}\t${aU}\t${bQ}\t${bU}`);
+    const map={shared:'SAME', 'only-a':'DELETION', 'only-b':'ADDITION', 'qty-diff':'MODIFICATION'};
+    const hl={shared:'gray', 'only-a':'red', 'only-b':'green', 'qty-diff':'yellow'};
+    const esc=v=>`"${String(v??'').replaceAll('"','""')}"`;
+    lines.push([
+      map[r.type],
+      esc(r.comp||''),
+      esc(r.a?.description||''),
+      esc(r.a?.qty||''),
+      esc(r.a?.supplier||''),
+      esc(r.b?.description||''),
+      esc(r.b?.qty||''),
+      esc(r.b?.supplier||''),
+      hl[r.type]
+    ].join(','));
   });
 
-  const blob=new Blob([lines.join('\n')],{type:'text/tab-separated-values'});
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`diff_${asmA.material}_vs_${asmB.material}.tsv`;
+  a.download=`diff_${asmA.material}_vs_${asmB.material}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('TSV exported');
+  toast('CSV exported');
 }
+
 
 
 </script>
