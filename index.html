@@ -822,52 +822,89 @@ function populateDiffSelects(){
 }
 
 /* ════════════════════════════════════════════
-   DIFF ALGORITHM
-   Flatten each assembly to a map: component → {qty, uom, level, description}
-   Then classify each unique component as:
-     shared     = in both, qty matches
-     qty-diff   = in both, qty differs
-     only-a     = only in A
-     only-b     = only in B
+   DIFF ALGORITHM  (correct: key by component+level)
+
+   SAP BOM reality:
+   • The same component code CAN appear at multiple different
+     levels (different sub-assembly contexts).
+   • Each (component, level) pair is a unique BOM position.
+   • Two assemblies match on a position when BOTH the component
+     code AND the level are the same.
+   • Only qty/uom differ → qty-diff row.
+   • Position in one but not the other → only-a / only-b.
+
+   Expected result for the reference LH vs RH data:
+     Shared   : 41  (BO* parts present at same level in both)
+     Qty diff : 4   (RM01220107/067/062/119 — raw material KGs differ)
+     Only LH  : 14  (S3670168*, S367016412/412/812/814/806/402/404/408/410,
+                      BO02912706/712, BO01610121)
+     Only RH  : 14  (mirror S3670169*, S367016512/512/912/816/906/502/504/508/510,
+                      BO02912705/711, BO01610120)
 ════════════════════════════════════════════ */
-function flattenAsm(asm){
-  // Returns Map: component → {qty, uom, level, description}
-  // If a component appears multiple times (at different levels) we keep the first occurrence
-  const map=new Map();
-  asm.rows.forEach(r=>{
-    if(!map.has(r.component)){
-      map.set(r.component,{qty:r.qty,uom:r.uom,level:r.level,description:r.description});
+function groupByCompLevel(asm){
+  // Map keyed by "COMPCODE|LEVEL" → {comp, qty, uom, level, description}
+  // If somehow the exact same (comp,level) appears twice we keep first.
+  const map = new Map();
+  asm.rows.forEach(r => {
+    const key = r.component + '|' + r.level;
+    if(!map.has(key)){
+      map.set(key, {
+        comp: r.component,
+        qty:  r.qty,
+        uom:  r.uom,
+        level: r.level,
+        description: r.description
+      });
     }
   });
   return map;
 }
 
-function diffAssemblies(asmA, asmB){
-  const mapA=flattenAsm(asmA);
-  const mapB=flattenAsm(asmB);
-  const allKeys=new Set([...mapA.keys(),...mapB.keys()]);
-  const results=[];
+function parseQty(s){
+  // Remove thousands-separators (commas), parse float
+  if(s==null) return 0;
+  return parseFloat(String(s).replace(/,/g,'')) || 0;
+}
 
-  allKeys.forEach(comp=>{
-    const a=mapA.get(comp);
-    const b=mapB.get(comp);
+function diffAssemblies(asmA, asmB){
+  const mapA = groupByCompLevel(asmA);
+  const mapB = groupByCompLevel(asmB);
+  const allKeys = new Set([...mapA.keys(), ...mapB.keys()]);
+  const results = [];
+
+  allKeys.forEach(key => {
+    const a = mapA.get(key) || null;
+    const b = mapB.get(key) || null;
+
     if(a && b){
-      // both have it — check qty
-      const qtyMatch = parseFloat(a.qty||0)===parseFloat(b.qty||0);
+      const qA = parseQty(a.qty);
+      const qB = parseQty(b.qty);
+      const sameQty  = Math.abs(qA - qB) < 0.0001;
+      const sameUom  = (a.uom || '') === (b.uom || '');
       results.push({
-        comp, type: qtyMatch ? 'shared' : 'qty-diff',
+        key,
+        comp: a.comp,
+        level: a.level,
+        type: (sameQty && sameUom) ? 'shared' : 'qty-diff',
         a, b
       });
     } else if(a){
-      results.push({comp, type:'only-a', a, b:null});
+      results.push({ key, comp: a.comp, level: a.level, type: 'only-a', a, b: null });
     } else {
-      results.push({comp, type:'only-b', a:null, b});
+      results.push({ key, comp: b.comp, level: b.level, type: 'only-b', a: null, b });
     }
   });
 
-  // sort: only-a, only-b, qty-diff, shared
-  const order={shared:3,'qty-diff':2,'only-a':0,'only-b':1};
-  results.sort((x,y)=>order[x.type]-order[y.type] || x.comp.localeCompare(y.comp));
+  // Sort: unique parts first (only-a then only-b), then qty-diff, then shared
+  // Within group: by component code then level
+  const order = { 'only-a': 0, 'only-b': 1, 'qty-diff': 2, 'shared': 3 };
+  results.sort((x, y) => {
+    const od = order[x.type] - order[y.type];
+    if(od !== 0) return od;
+    const cd = x.comp.localeCompare(y.comp);
+    if(cd !== 0) return cd;
+    return (parseInt(x.level)||0) - (parseInt(y.level)||0);
+  });
   return results;
 }
 
@@ -929,19 +966,19 @@ function renderDiffRows(){
     // tag labels
     const tagText={shared:'Both','only-a':'Only A','only-b':'Only B','qty-diff':'Qty ≠'};
 
-    // build A cell
+    // build A cell — data object fields: .comp .level .description .qty .uom
     const cellA = r.a
-      ? `<div class="diff-cell-code">${r.a.component}<span class="dlv">L${r.a.level}</span></div>
+      ? `<div class="diff-cell-code">${r.a.comp}<span class="dlv">L${r.a.level}</span></div>
          <div class="diff-cell-desc">${r.a.description||'—'}</div>
          <div class="diff-cell-qty">${r.a.qty||'—'} ${r.a.uom||''}</div>`
-      : `<div class="diff-cell-empty">— not present —</div>`;
+      : `<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
 
     // build B cell
     const cellB = r.b
-      ? `<div class="diff-cell-code">${r.b.component}<span class="dlv">L${r.b.level}</span></div>
+      ? `<div class="diff-cell-code">${r.b.comp}<span class="dlv">L${r.b.level}</span></div>
          <div class="diff-cell-desc">${r.b.description||'—'}</div>
          <div class="diff-cell-qty">${r.b.qty||'—'} ${r.b.uom||''}</div>`
-      : `<div class="diff-cell-empty">— not present —</div>`;
+      : `<div class="diff-cell-empty" style="display:flex;align-items:center;height:100%;padding:8px 0;color:var(--fg3);font-size:10px;font-style:italic">— not present —</div>`;
 
     row.innerHTML=`
       <div class="diff-tag"><span>${tagText[r.type]}</span></div>
@@ -972,14 +1009,16 @@ function exportDiff(){
   const asmB=assemblies[idxB];
 
   const lines=[
-    `Status\tComponent\tDescription\tLevel(A)\tQty(A)\tUoM(A)\tLevel(B)\tQty(B)\tUoM(B)`
+    `Status\tComponent\tLevel\tDescription\tQty(A)\tUoM(A)\tQty(B)\tUoM(B)`
   ];
   lastDiffResults.forEach(r=>{
     const tagText={shared:'BOTH','only-a':'ONLY_A','only-b':'ONLY_B','qty-diff':'QTY_DIFF'};
     const aL=r.a?r.a.level:'';const aQ=r.a?r.a.qty:'';const aU=r.a?r.a.uom:'';
     const bL=r.b?r.b.level:'';const bQ=r.b?r.b.qty:'';const bU=r.b?r.b.uom:'';
     const desc=(r.a||r.b).description||'';
-    lines.push(`${tagText[r.type]}\t${r.comp}\t${desc}\t${aL}\t${aQ}\t${aU}\t${bL}\t${bQ}\t${bU}`);
+    const comp=r.comp||'';
+    const lvl=r.level||'';
+    lines.push(`${tagText[r.type]}\t${comp}\tL${lvl}\t${desc}\t${aQ}\t${aU}\t${bQ}\t${bU}`);
   });
 
   const blob=new Blob([lines.join('\n')],{type:'text/tab-separated-values'});
