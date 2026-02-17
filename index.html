@@ -864,28 +864,31 @@ function populateDiffSelects(){
                       BO02912705/711, BO01610120)
 ════════════════════════════════════════════ */
 function groupByCompLevel(asm){
-  // Map keyed by "COMPCODE|LEVEL" → {comp, qty, uom, level, description}
-  // If somehow the exact same (comp,level) appears twice we keep first.
+  // Map keyed by "COMPCODE|LEVEL" → [{comp, qty, uom, level, description}, ...]
+  // We keep *all* rows to preserve multiplicity when the same component repeats.
   const map = new Map();
   asm.rows.forEach(r => {
     const key = r.component + '|' + r.level;
-    if(!map.has(key)){
-      map.set(key, {
-        comp: r.component,
-        qty:  r.qty,
-        uom:  r.uom,
-        level: r.level,
-        description: r.description
-      });
-    }
+    if(!map.has(key)) map.set(key, []);
+    map.get(key).push({
+      comp: r.component,
+      qty: r.qty,
+      uom: r.uom,
+      level: r.level,
+      description: r.description
+    });
   });
   return map;
 }
 
 function parseQty(s){
-  // Remove thousands-separators (commas), parse float
+  // Remove thousands separators (commas), parse float
   if(s==null) return 0;
   return parseFloat(String(s).replace(/,/g,'')) || 0;
+}
+
+function sameQtyUom(a,b){
+  return Math.abs(parseQty(a.qty)-parseQty(b.qty)) < 0.0001 && (a.uom||'') === (b.uom||'');
 }
 
 function diffAssemblies(asmA, asmB){
@@ -895,30 +898,34 @@ function diffAssemblies(asmA, asmB){
   const results = [];
 
   allKeys.forEach(key => {
-    const a = mapA.get(key) || null;
-    const b = mapB.get(key) || null;
+    const listA = [...(mapA.get(key) || [])];
+    const listB = [...(mapB.get(key) || [])];
 
-    if(a && b){
-      const qA = parseQty(a.qty);
-      const qB = parseQty(b.qty);
-      const sameQty  = Math.abs(qA - qB) < 0.0001;
-      const sameUom  = (a.uom || '') === (b.uom || '');
-      results.push({
-        key,
-        comp: a.comp,
-        level: a.level,
-        type: (sameQty && sameUom) ? 'shared' : 'qty-diff',
-        a, b
-      });
-    } else if(a){
-      results.push({ key, comp: a.comp, level: a.level, type: 'only-a', a, b: null });
-    } else {
-      results.push({ key, comp: b.comp, level: b.level, type: 'only-b', a: null, b });
+    // First pass: exact qty/uom matches become shared.
+    for(let i=listA.length-1;i>=0;i--){
+      const a=listA[i];
+      const j=listB.findIndex(b=>sameQtyUom(a,b));
+      if(j!==-1){
+        const b=listB[j];
+        results.push({ key, comp:a.comp, level:a.level, type:'shared', a, b });
+        listA.splice(i,1);
+        listB.splice(j,1);
+      }
     }
+
+    // Second pass: remaining pairs at same component+level are qty-diff.
+    while(listA.length && listB.length){
+      const a=listA.shift();
+      const b=listB.shift();
+      results.push({ key, comp:a.comp, level:a.level, type:'qty-diff', a, b });
+    }
+
+    // Leftovers are unique to each side.
+    listA.forEach(a=>results.push({ key, comp:a.comp, level:a.level, type:'only-a', a, b:null }));
+    listB.forEach(b=>results.push({ key, comp:b.comp, level:b.level, type:'only-b', a:null, b }));
   });
 
-  // Sort: unique parts first (only-a then only-b), then qty-diff, then shared
-  // Within group: by component code then level
+  // Sort: unique parts first (only-a then only-b), then qty-diff, then shared.
   const order = { 'only-a': 0, 'only-b': 1, 'qty-diff': 2, 'shared': 3 };
   results.sort((x, y) => {
     const od = order[x.type] - order[y.type];
