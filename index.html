@@ -444,7 +444,7 @@ textarea::placeholder{color:var(--fg3);}
       </button>
       <button class="diff-export" id="diff-export-btn" onclick="exportDiff()" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export TSV
+        Download Comparison CSV
       </button>
     </div>
     <!-- Summary cards -->
@@ -1161,7 +1161,12 @@ function renderDiffRows(){
 
 function renderCompareSplit(){
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
-  const rows=compareRows.filter(r=>!q || r.comp.toLowerCase().includes(q) || (r.a?.description||'').toLowerCase().includes(q) || (r.b?.description||'').toLowerCase().includes(q));
+  const typeMap={same:'shared',del:'only-a',add:'only-b',mod:'qty-diff'};
+  const rows=compareRows.filter(r=>{
+    const matchesFilter=activeFilters.has(typeMap[r.type]||'shared');
+    const matchesSearch=!q || r.comp.toLowerCase().includes(q) || (r.a?.description||'').toLowerCase().includes(q) || (r.b?.description||'').toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
   const left=document.getElementById('cmp-rows-a');
   const right=document.getElementById('cmp-rows-b');
   left.innerHTML='';right.innerHTML='';
@@ -1183,11 +1188,11 @@ function toggleChip(el,type){
   el.classList.toggle('on');
   if(el.classList.contains('on')) activeFilters.add(type);
   else activeFilters.delete(type);
-  if(lastDiffResults.length) renderDiffRows();
+  if(lastDiffResults.length){renderDiffRows();renderCompareSplit();}
 }
 
 /* ════════════════════════════════════════════
-   EXPORT DIFF AS TSV
+   EXPORT DIFF AS CSV
 ════════════════════════════════════════════ */
 function exportDiff(){
   if(!lastDiffResults.length) return;
