@@ -238,7 +238,7 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-cell-empty{color:var(--fg3);font-style:italic;font-size:10px;align-self:center;}
 .diff-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .diff-filter-label{font-size:10px;color:var(--fg3);font-weight:600;}
-.diff-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;}
+.diff-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;appearance:none;background:transparent;line-height:1.1;}
 .diff-chip.shared{border-color:rgba(138,154,184,.3);color:var(--d-shared-fg);background:transparent;}
 .diff-chip.shared.on{background:rgba(30,42,58,.8);}
 .diff-chip.only-a{border-color:var(--d-a-bd);color:var(--d-a-fg);background:transparent;}
@@ -700,12 +700,12 @@ textarea::placeholder{color:var(--fg3);}
     </div>
     <div class="diff-filters" id="diff-filters" style="display:none">
       <span class="diff-filter-label">Show:</span>
-      <span class="diff-chip shared on" onclick="toggleChip(this,'shared')"><span class="diff-chip-dot"></span>Shared</span>
-      <span class="diff-chip only-a on" onclick="toggleChip(this,'only-a')"><span class="diff-chip-dot"></span>Only A</span>
-      <span class="diff-chip only-b on" onclick="toggleChip(this,'only-b')"><span class="diff-chip-dot"></span>Only B</span>
-      <span class="diff-chip qty-diff on" onclick="toggleChip(this,'qty-diff')"><span class="diff-chip-dot"></span>Qty Diff</span>
-      <span class="diff-chip supplier-diff on" onclick="toggleChip(this,'supplier-diff')"><span class="diff-chip-dot"></span>Supplier Diff</span>
-      <span class="diff-chip both-diff on" onclick="toggleChip(this,'both-diff')"><span class="diff-chip-dot"></span>Qty + Supplier</span>
+      <button type="button" class="diff-chip shared on" onclick="toggleChip(this,'shared')"><span class="diff-chip-dot"></span>Shared</button>
+      <button type="button" class="diff-chip only-a on" onclick="toggleChip(this,'only-a')"><span class="diff-chip-dot"></span>Only A</button>
+      <button type="button" class="diff-chip only-b on" onclick="toggleChip(this,'only-b')"><span class="diff-chip-dot"></span>Only B</button>
+      <button type="button" class="diff-chip qty-diff on" onclick="toggleChip(this,'qty-diff')"><span class="diff-chip-dot"></span>Qty Diff</button>
+      <button type="button" class="diff-chip supplier-diff on" onclick="toggleChip(this,'supplier-diff')"><span class="diff-chip-dot"></span>Supplier Diff</button>
+      <button type="button" class="diff-chip both-diff on" onclick="toggleChip(this,'both-diff')"><span class="diff-chip-dot"></span>Qty + Supplier</button>
     </div>
     <div class="diff-table-wrap" id="diff-table" style="display:none">
       <div class="diff-table-head">
@@ -1136,19 +1136,6 @@ function toggleAsmEdit(idx){
   renderEditTable();
   toast('Opened Edit Workbench for selected assembly');
 }
-
-function saveEditHistoryForAsm(asmIdx){
-  if(asmIdx==null || !assemblies[asmIdx]) return;
-  if(editPanelAsmIdx!==asmIdx) editPanelAsmIdx=asmIdx;
-  const snapshot=JSON.parse(JSON.stringify(assemblies[asmIdx].rows));
-  editHistory.push(snapshot);
-  if(editHistory.length>50) editHistory.shift();
-}
-
-
-
-
-
 
 /* ════════ EXPORT FUNCTIONS ════════ */
 function toggleExportMenu(){
@@ -2189,10 +2176,15 @@ function buildPartMap(asm){
   asm.rows.forEach(r=>{
     const comp=(r.component||'').trim();
     if(!comp) return;
-    const key=`L${r.level||1}|${comp}|${(r.description||'').trim()}|${(r.uom||'NO').trim()}|${(r.supplier||'').trim()}`;
-    if(!map.has(key)) map.set(key,{comp,level:r.level||1,description:r.description||'',supplier:r.supplier||'',qty:0,uom:r.uom||'NO'});
+    const key=`L${r.level||1}|${comp}|${(r.description||'').trim()}|${(r.uom||'NO').trim()}`;
+    if(!map.has(key)) map.set(key,{comp,level:r.level||1,description:r.description||'',supplierSet:new Set(),qty:0,uom:r.uom||'NO'});
     const it=map.get(key);
     it.qty += parseQty(r.qty);
+    it.supplierSet.add((r.supplier||'').trim());
+  });
+  map.forEach(it=>{
+    it.supplier=[...it.supplierSet].sort().join(' | ');
+    delete it.supplierSet;
   });
   return map;
 }
