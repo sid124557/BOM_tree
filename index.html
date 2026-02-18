@@ -29,6 +29,70 @@
 .edit-mode-active{position:relative;}
 .edit-mode-active::before{content:'';position:absolute;inset:0;border:2px solid var(--accent);border-radius:12px;pointer-events:none;animation:editPulse 2s ease-in-out infinite;}
 @keyframes editPulse{0%,100%{opacity:.3;}50%{opacity:.6;}}
+
+/* ── EDIT PANEL ── */
+.edit-panel{flex:1;overflow-y:auto;padding:18px 26px;display:none;flex-direction:column;gap:16px;}
+.edit-panel.visible{display:flex;}
+
+.edit-controls-bar{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:14px 18px;flex-wrap:wrap;}
+.edit-selector{flex:1;min-width:280px;}
+.edit-label{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block;}
+.edit-select{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 12px;cursor:pointer;transition:border-color .2s;}
+.edit-select:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);}
+
+.edit-mode-toggle{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:4px;border-radius:7px;}
+.edit-mode-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:5px;background:transparent;border:none;color:var(--fg3);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.edit-mode-btn:hover{color:var(--fg2);}
+.edit-mode-btn.active{background:var(--accent);color:#000;}
+.edit-mode-btn svg{opacity:.7;}
+.edit-mode-btn.active svg{opacity:1;}
+
+.edit-actions-bar{display:flex;gap:6px;}
+.edit-action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--bd2);color:var(--fg2);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.edit-action-btn:hover{background:rgba(255,255,255,.09);color:var(--fg);transform:translateY(-1px);}
+.edit-action-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
+.edit-action-btn.primary:hover{background:#00dfb8;box-shadow:0 4px 14px rgba(0,200,150,.35);}
+
+.edit-table-container{flex:1;background:var(--card);border:1px solid var(--bd2);border-radius:10px;overflow:hidden;min-height:400px;display:flex;flex-direction:column;}
+.edit-table-header{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:2;}
+.edit-table-header span{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;}
+.edit-table-body{flex:1;overflow-y:auto;}
+
+.edit-row{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center;transition:background .15s;}
+.edit-row:hover{background:var(--hover);}
+.edit-row:last-child{border-bottom:none;}
+.edit-row.dragging{opacity:.4;}
+.edit-row.drag-over{border-top:2px solid var(--accent);margin-top:-2px;}
+
+.edit-drag-handle{cursor:move;display:grid;place-items:center;color:var(--fg3);opacity:.3;transition:opacity .2s;}
+.edit-row:hover .edit-drag-handle{opacity:1;}
+.edit-drag-handle:hover{color:var(--accent);}
+
+.edit-level-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;text-align:center;}
+.edit-level-badge.l1{background:var(--l1b);color:var(--l1);}
+.edit-level-badge.l2{background:var(--l2b);color:var(--l2);}
+.edit-level-badge.l3{background:var(--l3b);color:var(--l3);}
+.edit-level-badge.l4{background:var(--l4b);color:var(--l4);}
+.edit-level-badge.l5{background:var(--l5b);color:var(--l5);}
+.edit-level-badge.l6{background:var(--l6b);color:var(--l6);}
+
+.edit-input{background:rgba(0,0,0,.5);border:1px solid var(--bd2);border-radius:5px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 8px;width:100%;transition:all .2s;}
+.edit-input:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,.7);box-shadow:0 0 0 2px var(--accent-bg);}
+.edit-input.qty{text-align:right;}
+.edit-input:disabled{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.03);color:var(--fg3);cursor:not-allowed;}
+
+.edit-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.edit-text.code{font-weight:600;color:var(--fg);}
+
+.edit-row-actions{display:flex;gap:4px;opacity:0;transition:opacity .2s;}
+.edit-row:hover .edit-row-actions{opacity:1;}
+.edit-icon-btn{width:24px;height:24px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--bd2);border-radius:4px;color:var(--fg3);cursor:pointer;transition:all .15s;}
+.edit-icon-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
+.edit-icon-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25);}
+.edit-icon-btn.dup:hover{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25);}
+
+.edit-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:12px;color:var(--fg3);text-align:center;}
+
 .edit-mode .part-row{background:rgba(0,200,150,.015);}
 .edit-mode .part-row:hover{background:rgba(0,200,150,.05);}
 .edit-field{background:rgba(0,0,0,.5);border:1px solid var(--bd2);border-radius:4px;color:var(--fg);font-family:inherit;font-size:inherit;padding:3px 6px;width:100%;transition:border-color .2s,background .2s;}
@@ -431,6 +495,10 @@ textarea::placeholder{color:var(--fg3);}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
       Tree View
     </button>
+    <button class="tab-btn" id="tab-edit" onclick="switchTab('edit')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit
+    </button>
     <button class="tab-btn" id="tab-diff" onclick="switchTab('diff')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
       Diff / Compare
@@ -445,6 +513,58 @@ textarea::placeholder{color:var(--fg3);}
     </div>
   </div>
 
+  <!-- EDIT VIEW -->
+  <div class="edit-panel" id="edit-panel">
+    <!-- Edit Controls Bar -->
+    <div class="edit-controls-bar">
+      <div class="edit-selector">
+        <label class="edit-label">Assembly to Edit</label>
+        <select class="edit-select" id="edit-asm-select" onchange="selectEditAsm()">
+          <option value="">— Select assembly to edit —</option>
+        </select>
+      </div>
+      <div class="edit-mode-toggle">
+        <button class="edit-mode-btn" id="view-only-btn" onclick="setEditViewMode('view')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          View Only
+        </button>
+        <button class="edit-mode-btn active" id="edit-mode-btn" onclick="setEditViewMode('edit')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Mode
+        </button>
+      </div>
+      <div class="edit-actions-bar">
+        <button class="edit-action-btn" onclick="addNewRowEdit()" title="Add new part">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Part
+        </button>
+        <button class="edit-action-btn" onclick="undoLastChange()" title="Undo last change">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Undo
+        </button>
+        <button class="edit-action-btn primary" onclick="saveEditChanges()" title="Save changes">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Edit Table View -->
+    <div class="edit-table-container" id="edit-table-container">
+      <div class="edit-empty">
+        <div class="empty-ring">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <div class="empty-title">No Assembly Selected</div>
+        <div class="empty-desc">Select an assembly from the dropdown above to begin editing</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIFF VIEW -->
   <div class="diff-panel" id="diff-panel">
     <div class="diff-selectors">
       <div class="diff-sel-side">
@@ -535,7 +655,11 @@ let assemblies=[];
 let bomVersions=[];
 let compareRows=[];
 let draggedElement=null;
-let editingAsmIdx=null; // Track which assembly is being edited
+let editingAsmIdx=null; // Track which assembly is being edited (tree view)
+let editPanelAsmIdx=null; // Track assembly being edited in edit panel
+let editViewMode='edit'; // 'edit' or 'view'
+let editHistory=[]; // For undo functionality
+let editDraggedRow=null;
 
 /* ════════ PARSE ════════ */
 function parseData(raw){
@@ -1182,6 +1306,9 @@ function clearAll(){
   document.getElementById('cmp-rows-a').innerHTML='';
   document.getElementById('cmp-rows-b').innerHTML='';
   editingAsmIdx=null;
+  editPanelAsmIdx=null;
+  editHistory=[];
+  document.getElementById('edit-asm-select').innerHTML='<option value="">— Select assembly to edit —</option>';
   switchTab('tree');
 }
 
@@ -1238,12 +1365,344 @@ document.getElementById('meta-date').value=new Date().toISOString().slice(0,10);
 /* ════════ TAB SWITCHING ════════ */
 function switchTab(tab){
   const isTree = tab==='tree';
+  const isEdit = tab==='edit';
+  const isDiff = tab==='diff';
+  
   document.getElementById('tab-tree').classList.toggle('active',isTree);
-  document.getElementById('tab-diff').classList.toggle('active',!isTree);
+  document.getElementById('tab-edit').classList.toggle('active',isEdit);
+  document.getElementById('tab-diff').classList.toggle('active',isDiff);
+  
   document.getElementById('tree').style.display = isTree ? '' : 'none';
-  const dp = document.getElementById('diff-panel');
-  dp.classList.toggle('visible',!isTree);
+  document.getElementById('edit-panel').classList.toggle('visible',isEdit);
+  document.getElementById('diff-panel').classList.toggle('visible',isDiff);
+  
   document.querySelector('.ctrls').style.display = '';
+  
+  if(isEdit){
+    populateEditSelect();
+    if(editPanelAsmIdx !== null){
+      renderEditTable();
+    }
+  }
+}
+
+/* ════════ EDIT PANEL FUNCTIONS ════════ */
+function populateEditSelect(){
+  const sel=document.getElementById('edit-asm-select');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— Select assembly to edit —</option>';
+  assemblies.forEach((a,i)=>{
+    const opt=document.createElement('option');
+    opt.value=i;
+    opt.textContent=`${a.material} — ${a.description||'No description'}`;
+    sel.appendChild(opt);
+  });
+  if(prev!=='' && assemblies[prev]) sel.value=prev;
+}
+
+function selectEditAsm(){
+  const idx=document.getElementById('edit-asm-select').value;
+  if(idx===''){
+    editPanelAsmIdx=null;
+    document.getElementById('edit-table-container').innerHTML=`
+      <div class="edit-empty">
+        <div class="empty-ring">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <div class="empty-title">No Assembly Selected</div>
+        <div class="empty-desc">Select an assembly from the dropdown above to begin editing</div>
+      </div>`;
+    return;
+  }
+  editPanelAsmIdx=parseInt(idx);
+  editHistory=[];
+  renderEditTable();
+  toast('Assembly loaded for editing');
+}
+
+function setEditViewMode(mode){
+  editViewMode=mode;
+  document.getElementById('view-only-btn').classList.toggle('active',mode==='view');
+  document.getElementById('edit-mode-btn').classList.toggle('active',mode==='edit');
+  renderEditTable();
+}
+
+function renderEditTable(){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  const container=document.getElementById('edit-table-container');
+  const isEdit=editViewMode==='edit';
+  
+  container.innerHTML='';
+  
+  // Header
+  const header=document.createElement('div');
+  header.className='edit-table-header';
+  if(isEdit){
+    header.innerHTML=`
+      <span></span>
+      <span>Level</span>
+      <span>Indent</span>
+      <span>Component</span>
+      <span>Description</span>
+      <span>Qty</span>
+      <span>UoM</span>
+      <span>Actions</span>`;
+  }else{
+    header.innerHTML=`
+      <span></span>
+      <span>Level</span>
+      <span>Indent</span>
+      <span>Component</span>
+      <span>Description</span>
+      <span>Qty</span>
+      <span>UoM</span>
+      <span></span>`;
+  }
+  container.appendChild(header);
+  
+  // Body
+  const body=document.createElement('div');
+  body.className='edit-table-body';
+  
+  asm.rows.forEach((row,idx)=>{
+    const rowEl=createEditRow(row,idx,isEdit);
+    body.appendChild(rowEl);
+  });
+  
+  container.appendChild(body);
+}
+
+function createEditRow(row,idx,isEdit){
+  const rowEl=document.createElement('div');
+  rowEl.className='edit-row';
+  rowEl.dataset.rowIdx=idx;
+  rowEl.draggable=isEdit;
+  
+  if(isEdit){
+    rowEl.ondragstart=e=>{
+      editDraggedRow=rowEl;
+      rowEl.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    };
+    rowEl.ondragend=e=>{
+      rowEl.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    };
+    rowEl.ondragover=e=>{
+      e.preventDefault();
+      if(!editDraggedRow||editDraggedRow===rowEl) return;
+      rowEl.classList.add('drag-over');
+    };
+    rowEl.ondragleave=e=>{
+      rowEl.classList.remove('drag-over');
+    };
+    rowEl.ondrop=e=>{
+      e.preventDefault();
+      if(!editDraggedRow||editDraggedRow===rowEl) return;
+      rowEl.classList.remove('drag-over');
+      
+      const fromIdx=parseInt(editDraggedRow.dataset.rowIdx);
+      const toIdx=parseInt(rowEl.dataset.rowIdx);
+      
+      saveEditHistory();
+      const asm=assemblies[editPanelAsmIdx];
+      const item=asm.rows.splice(fromIdx,1)[0];
+      asm.rows.splice(toIdx,0,item);
+      asm.tree=buildTree(asm.rows);
+      
+      renderEditTable();
+      toast('Row reordered');
+    };
+  }
+  
+  const lvCls=`l${Math.min(row.level,6)}`;
+  const indent=row.level-1;
+  
+  // Drag handle
+  if(isEdit){
+    const drag=document.createElement('div');
+    drag.className='edit-drag-handle';
+    drag.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>`;
+    rowEl.appendChild(drag);
+  }else{
+    rowEl.appendChild(document.createElement('div'));
+  }
+  
+  // Level badge
+  const levelBadge=document.createElement('div');
+  levelBadge.className=`edit-level-badge ${lvCls}`;
+  levelBadge.textContent=`L${row.level}`;
+  rowEl.appendChild(levelBadge);
+  
+  // Indent indicator
+  const indentEl=document.createElement('div');
+  indentEl.className='edit-text';
+  indentEl.textContent='└'.repeat(indent);
+  indentEl.style.color='var(--fg3)';
+  rowEl.appendChild(indentEl);
+  
+  // Component
+  if(isEdit){
+    const compInput=document.createElement('input');
+    compInput.className='edit-input';
+    compInput.value=row.component||'';
+    compInput.onchange=()=>{
+      saveEditHistory();
+      row.component=compInput.value;
+      assemblies[editPanelAsmIdx].tree=buildTree(assemblies[editPanelAsmIdx].rows);
+    };
+    rowEl.appendChild(compInput);
+  }else{
+    const comp=document.createElement('div');
+    comp.className='edit-text code';
+    comp.textContent=row.component||'—';
+    comp.title=row.component;
+    rowEl.appendChild(comp);
+  }
+  
+  // Description
+  if(isEdit){
+    const descInput=document.createElement('input');
+    descInput.className='edit-input';
+    descInput.value=row.description||'';
+    descInput.onchange=()=>{
+      saveEditHistory();
+      row.description=descInput.value;
+    };
+    rowEl.appendChild(descInput);
+  }else{
+    const desc=document.createElement('div');
+    desc.className='edit-text';
+    desc.textContent=row.description||'—';
+    desc.title=row.description;
+    rowEl.appendChild(desc);
+  }
+  
+  // Qty
+  if(isEdit){
+    const qtyInput=document.createElement('input');
+    qtyInput.className='edit-input qty';
+    qtyInput.type='number';
+    qtyInput.step='0.001';
+    qtyInput.value=row.qty||'';
+    qtyInput.onchange=()=>{
+      saveEditHistory();
+      row.qty=qtyInput.value;
+    };
+    rowEl.appendChild(qtyInput);
+  }else{
+    const qty=document.createElement('div');
+    qty.className='edit-text';
+    qty.style.textAlign='right';
+    qty.textContent=row.qty||'—';
+    rowEl.appendChild(qty);
+  }
+  
+  // UoM
+  if(isEdit){
+    const uomInput=document.createElement('input');
+    uomInput.className='edit-input';
+    uomInput.value=row.uom||'';
+    uomInput.onchange=()=>{
+      saveEditHistory();
+      row.uom=uomInput.value;
+    };
+    rowEl.appendChild(uomInput);
+  }else{
+    const uom=document.createElement('div');
+    uom.className='edit-text';
+    uom.style.textAlign='center';
+    uom.textContent=row.uom||'—';
+    rowEl.appendChild(uom);
+  }
+  
+  // Actions
+  if(isEdit){
+    const actions=document.createElement('div');
+    actions.className='edit-row-actions';
+    
+    const dupBtn=document.createElement('button');
+    dupBtn.className='edit-icon-btn dup';
+    dupBtn.title='Duplicate';
+    dupBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    dupBtn.onclick=()=>duplicateEditRow(idx);
+    
+    const delBtn=document.createElement('button');
+    delBtn.className='edit-icon-btn del';
+    delBtn.title='Delete';
+    delBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    delBtn.onclick=()=>deleteEditRow(idx);
+    
+    actions.appendChild(dupBtn);
+    actions.appendChild(delBtn);
+    rowEl.appendChild(actions);
+  }else{
+    rowEl.appendChild(document.createElement('div'));
+  }
+  
+  return rowEl;
+}
+
+function saveEditHistory(){
+  if(editPanelAsmIdx===null) return;
+  const snapshot=JSON.parse(JSON.stringify(assemblies[editPanelAsmIdx].rows));
+  editHistory.push(snapshot);
+  if(editHistory.length>50) editHistory.shift(); // Keep last 50 changes
+}
+
+function undoLastChange(){
+  if(!editHistory.length){toast('Nothing to undo');return;}
+  const prevState=editHistory.pop();
+  assemblies[editPanelAsmIdx].rows=prevState;
+  assemblies[editPanelAsmIdx].tree=buildTree(prevState);
+  renderEditTable();
+  toast('Undone');
+}
+
+function addNewRowEdit(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  saveEditHistory();
+  const asm=assemblies[editPanelAsmIdx];
+  const newRow={level:1,component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
+  asm.rows.push(newRow);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+  toast('New part added');
+}
+
+function duplicateEditRow(idx){
+  if(editPanelAsmIdx===null) return;
+  saveEditHistory();
+  const asm=assemblies[editPanelAsmIdx];
+  const row=asm.rows[idx];
+  const newRow={...row,id:uid(),component:row.component+'-COPY'};
+  asm.rows.splice(idx+1,0,newRow);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+  toast('Row duplicated');
+}
+
+function deleteEditRow(idx){
+  if(editPanelAsmIdx===null) return;
+  if(!confirm('Delete this row?')) return;
+  saveEditHistory();
+  const asm=assemblies[editPanelAsmIdx];
+  asm.rows.splice(idx,1);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+  toast('Row deleted');
+}
+
+function saveEditChanges(){
+  if(editPanelAsmIdx===null){toast('No assembly selected');return;}
+  editHistory=[];
+  toast('Changes saved to current session');
+  updateStats();
+  renderNav();
 }
 
 /* ════════ DIFF FUNCTIONS ════════ */
