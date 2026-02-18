@@ -67,6 +67,9 @@
 
 .edit-row{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center;transition:background .15s;}
 .edit-row:hover{background:var(--hover);}
+.edit-row.selected{background:rgba(0,200,150,.08);outline:1px solid var(--accent-bd);outline-offset:-1px;}
+.edit-row.selected .edit-level-badge{box-shadow:0 0 0 1px var(--accent-bd) inset;}
+
 .edit-row:last-child{border-bottom:none;}
 .edit-row.dragging{opacity:.4;}
 .edit-row.drag-over{border-top:2px solid var(--accent);margin-top:-2px;}
@@ -97,6 +100,7 @@
 .edit-icon-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
 .edit-icon-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25);}
 .edit-icon-btn.dup:hover{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25);}
+.edit-icon-btn.add:hover{background:rgba(59,130,246,.14);color:#60a5fa;border-color:rgba(59,130,246,.3);}
 
 .edit-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:12px;color:var(--fg3);text-align:center;}
 
@@ -545,6 +549,14 @@ textarea::placeholder{color:var(--fg3);}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Part
         </button>
+        <button class="edit-action-btn" onclick="addChildPartFromSelection()" title="Add part under selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6a2 2 0 0 0 2 2h14"/><path d="M14 10h6"/><path d="M17 7v6"/></svg>
+          Add Child
+        </button>
+        <button class="edit-action-btn" onclick="addSiblingPartFromSelection()" title="Add part below selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h10"/><path d="M17 8v8"/><path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/></svg>
+          Add Below
+        </button>
         <button class="edit-action-btn" onclick="undoLastChange()" title="Undo last change">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           Undo
@@ -561,7 +573,7 @@ textarea::placeholder{color:var(--fg3);}
     </div>
 
     <div class="edit-helper">
-      <strong>Tip:</strong> Use <em>Indent</em> controls to set hierarchy quickly. Then click <em>New BOM from Edit</em> to clone this BOM into a new revision.
+      <strong>Tip:</strong> Click a row first, then use <em>Add Child</em>/<em>Add Below</em> for targeted insertion in sub-assemblies. Use <em>Indent</em> controls for quick hierarchy fixes, then <em>New BOM from Edit</em> to clone.
     </div>
 
     <!-- Edit Table View -->
@@ -675,6 +687,7 @@ let editPanelAsmIdx=null; // Track assembly being edited in edit panel
 let editViewMode='edit'; // 'edit' or 'view'
 let editHistory=[]; // For undo functionality
 let editDraggedRow=null;
+let editSelectedRowIdx=null;
 
 /* ════════ PARSE ════════ */
 function parseData(raw){
@@ -1493,6 +1506,7 @@ function selectEditAsm(){
   }
   editPanelAsmIdx=parseInt(idx);
   editHistory=[];
+  editSelectedRowIdx=null;
   renderEditTable();
   toast('Assembly loaded for editing');
 }
@@ -1508,6 +1522,7 @@ function renderEditTable(){
   if(editPanelAsmIdx===null) return;
   const asm=assemblies[editPanelAsmIdx];
   const container=document.getElementById('edit-table-container');
+  if(editSelectedRowIdx!==null && (editSelectedRowIdx<0 || editSelectedRowIdx>=asm.rows.length)) editSelectedRowIdx=null;
   const isEdit=editViewMode==='edit';
   
   container.innerHTML='';
@@ -1552,8 +1567,13 @@ function renderEditTable(){
 
 function createEditRow(row,idx,isEdit){
   const rowEl=document.createElement('div');
-  rowEl.className='edit-row';
+  rowEl.className='edit-row'+(editSelectedRowIdx===idx?' selected':'');
   rowEl.dataset.rowIdx=idx;
+  rowEl.onclick=e=>{
+    if(e.target.closest('input,button,select,textarea')) return;
+    editSelectedRowIdx=idx;
+    renderEditTable();
+  };
   rowEl.draggable=isEdit;
   
   if(isEdit){
@@ -1586,6 +1606,7 @@ function createEditRow(row,idx,isEdit){
       const asm=assemblies[editPanelAsmIdx];
       const item=asm.rows.splice(fromIdx,1)[0];
       asm.rows.splice(toIdx,0,item);
+      editSelectedRowIdx=toIdx;
       asm.tree=buildTree(asm.rows);
       
       renderEditTable();
@@ -1730,6 +1751,18 @@ function createEditRow(row,idx,isEdit){
     const actions=document.createElement('div');
     actions.className='edit-row-actions';
     
+    const childBtn=document.createElement('button');
+    childBtn.className='edit-icon-btn add';
+    childBtn.title='Add child under this row';
+    childBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v6a2 2 0 0 0 2 2h12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    childBtn.onclick=()=>addChildPart(idx);
+
+    const belowBtn=document.createElement('button');
+    belowBtn.className='edit-icon-btn add';
+    belowBtn.title='Add below this row';
+    belowBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="14" y2="12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    belowBtn.onclick=()=>addSiblingBelow(idx);
+
     const dupBtn=document.createElement('button');
     dupBtn.className='edit-icon-btn dup';
     dupBtn.title='Duplicate';
@@ -1742,6 +1775,8 @@ function createEditRow(row,idx,isEdit){
     delBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     delBtn.onclick=()=>deleteEditRow(idx);
     
+    actions.appendChild(childBtn);
+    actions.appendChild(belowBtn);
     actions.appendChild(dupBtn);
     actions.appendChild(delBtn);
     rowEl.appendChild(actions);
@@ -1770,13 +1805,67 @@ function undoLastChange(){
 
 function addNewRowEdit(){
   if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
-  saveEditHistory();
+  if(editSelectedRowIdx!==null){
+    addSiblingBelow(editSelectedRowIdx);
+    return;
+  }
+  insertPartAt({insertAt:null,level:1,message:'New top-level part added'});
+}
+
+function addChildPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Child');return;}
+  addChildPart(editSelectedRowIdx);
+}
+
+function addSiblingPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Below');return;}
+  addSiblingBelow(editSelectedRowIdx);
+}
+
+function subtreeEndIndex(rows,startIdx){
+  const base=(rows[startIdx]?.level)||1;
+  let i=startIdx+1;
+  while(i<rows.length && (rows[i].level||1)>base) i++;
+  return i;
+}
+
+function addChildPart(idx){
   const asm=assemblies[editPanelAsmIdx];
-  const newRow={level:1,component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
-  asm.rows.push(newRow);
+  if(!asm || !asm.rows[idx]) return;
+  const level=Math.min(6,(asm.rows[idx].level||1)+1);
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:`Child part added under ${asm.rows[idx].component||'row'}`});
+}
+
+function addSiblingBelow(idx){
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const level=asm.rows[idx].level||1;
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:'Part added below selected row'});
+}
+
+function insertPartAt({insertAt=null,level=1,message='New part added'}={}){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  saveEditHistory();
+  const newRow={
+    level:Math.max(1,Math.min(6,level||1)),
+    component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),
+    description:'New component',
+    qty:'1',
+    uom:'NO',
+    supplier:'',
+    id:uid()
+  };
+  const at=(insertAt===null || insertAt>asm.rows.length) ? asm.rows.length : Math.max(0,insertAt);
+  asm.rows.splice(at,0,newRow);
+  editSelectedRowIdx=at;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
-  toast('New part added');
+  toast(message);
 }
 
 function duplicateEditRow(idx){
@@ -1786,6 +1875,7 @@ function duplicateEditRow(idx){
   const row=asm.rows[idx];
   const newRow={...row,id:uid(),component:row.component+'-COPY'};
   asm.rows.splice(idx+1,0,newRow);
+  editSelectedRowIdx=idx+1;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
   toast('Row duplicated');
@@ -1797,6 +1887,10 @@ function deleteEditRow(idx){
   saveEditHistory();
   const asm=assemblies[editPanelAsmIdx];
   asm.rows.splice(idx,1);
+  if(editSelectedRowIdx!==null){
+    if(editSelectedRowIdx===idx) editSelectedRowIdx=Math.min(idx,asm.rows.length-1);
+    else if(editSelectedRowIdx>idx) editSelectedRowIdx--;
+  }
   asm.tree=buildTree(asm.rows);
   renderEditTable();
   toast('Row deleted');
