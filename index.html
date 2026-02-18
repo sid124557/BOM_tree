@@ -984,94 +984,10 @@ function makeAsmBlock(asm,idx){
 
   const colHdr=document.createElement('div');
   colHdr.className='col-hdr rg'+(isEditing?'':' view-mode');
-  if(isEditing){
-    colHdr.innerHTML=`<span></span><span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span style="text-align:center">Actions</span>`;
-  }else{
-    colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
-  }
-
-  const body=document.createElement('div');
-  body.className='parts-body open'+(isEditing?' edit-mode':'');
-  body.appendChild(colHdr);
-
-  const partsDiv=document.createElement('div');
-  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color,idx)));
-  body.appendChild(partsDiv);
-
-  if(isEditing){
-    const addZone=document.createElement('div');
-    addZone.className='add-row-zone';
-    addZone.innerHTML=`<button class="add-row-btn" onclick="addNewRow(${idx})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Part</button>`;
-    body.appendChild(addZone);
-  }
-
-  bar.onclick=(e)=>{
-    if(e.target.closest('.mode-toggle')) return; // Don't toggle when clicking edit button
-    const open=body.classList.toggle('open');
-    bar.querySelector('.asm-chev').style.transform=open?'rotate(90deg)':'rotate(0)';
-  };
-
-  block.appendChild(bar);
-  block.appendChild(body);
-  return block;
-}
-
-/* ════════ PART ROW (EDITABLE) ════════ */
-function makePartWrap(node,asmColor,asmIdx){
-  const isEditing = false;
-  const wrap=document.createElement('div');
-  wrap.className='part-wrap';
-  wrap.dataset.comp=(node.component||'').toLowerCase();
-  wrap.dataset.desc=(node.description||'').toLowerCase();
-  wrap.dataset.nodeId=node.id;
-  wrap.dataset.asmIdx=asmIdx;
-  wrap.draggable=false;
-
-  if(isEditing){
-    wrap.ondragstart=e=>{
-      draggedElement=wrap;
-      wrap.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-    };
-    wrap.ondragend=e=>{
-      wrap.classList.remove('dragging');
-      document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>{
-        el.classList.remove('drag-over-top','drag-over-bottom');
-      });
-    };
-    wrap.ondragover=e=>{
-      e.preventDefault();
-      if(!draggedElement||draggedElement===wrap) return;
-      const rect=wrap.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      wrap.classList.remove('drag-over-top','drag-over-bottom');
-      if(e.clientY<mid){wrap.classList.add('drag-over-top');}
-      else{wrap.classList.add('drag-over-bottom');}
-    };
-    wrap.ondrop=e=>{
-      e.preventDefault();
-      if(!draggedElement||draggedElement===wrap) return;
-      const rect=wrap.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      const before=e.clientY<mid;
-      if(before){wrap.parentNode.insertBefore(draggedElement,wrap);}
-      else{wrap.parentNode.insertBefore(draggedElement,wrap.nextSibling);}
-      reorderRows(asmIdx);
-      toast('Row reordered');
-    };
-  }
 
   const lvCls=`l${Math.min(node.level,6)}`;
   const row=document.createElement('div');
   row.className='part-row rg'+(isEditing?'':' view-mode');
-
-  if(isEditing){
-    // Drag handle
-    const drag=document.createElement('div');
-    drag.className='drag-handle';
-    drag.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>`;
-    row.appendChild(drag);
-  }
 
   // Toggle
   const tog=document.createElement('div');
@@ -1083,20 +999,12 @@ function makePartWrap(node,asmColor,asmIdx){
   const lv=mk('span',`lbadge ${lvCls}`,`L${node.level}`);
   row.appendChild(lv);
 
-  // Component (editable)
-  if(isEditing){
-    const codeInput=document.createElement('input');
-    codeInput.className='edit-field pcode';
-    codeInput.value=node.component||'';
-    codeInput.onchange=()=>{node.component=codeInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(codeInput);
-  }else{
-    const code=mk('div','pcode',node.component);
-    code.title=node.component;
-    row.appendChild(code);
-  }
+  // Component
+  const code=mk('div','pcode',node.component||'—');
+  code.title=node.component;
+  row.appendChild(code);
 
-  // Description (editable)
+  // Description
   if(isEditing){
     const descInput=document.createElement('input');
     descInput.className='edit-field pdesc';
@@ -1109,21 +1017,11 @@ function makePartWrap(node,asmColor,asmIdx){
     row.appendChild(desc);
   }
 
-  // Qty (editable)
-  if(isEditing){
-    const qtyInput=document.createElement('input');
-    qtyInput.className='edit-field pqty qty';
-    qtyInput.value=node.qty||'';
-    qtyInput.type='number';
-    qtyInput.step='0.001';
-    qtyInput.onchange=()=>{node.qty=qtyInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(qtyInput);
-  }else{
-    const qty=mk('div','pqty',node.qty||'—');
-    row.appendChild(qty);
-  }
+  // Qty
+  const qty=mk('div','pqty',node.qty||'—');
+  row.appendChild(qty);
 
-  // UoM (editable)
+  // UoM
   if(isEditing){
     const uomInput=document.createElement('input');
     uomInput.className='edit-field puom';
@@ -1182,6 +1080,7 @@ function mk(tag,cls,text){const e=document.createElement(tag);e.className=cls;e.
 
 /* ════════ EDIT MODE FUNCTIONS ════════ */
 function toggleAsmEdit(idx){
+  clearTimeout(historyTimer);
   if(!assemblies[idx]) return;
   editPanelAsmIdx=idx;
   editSelectedRowIdx=null;
@@ -1578,6 +1477,7 @@ function toast(msg){
   next();
 }
 function clearAll(){
+  clearTimeout(historyTimer);
   document.getElementById('raw').value='';
   document.getElementById('quick-add').value='';
   assemblies=[];
@@ -1698,6 +1598,7 @@ function populateEditSelect(){
 }
 
 function selectEditAsm(){
+  clearTimeout(historyTimer);
   const idx=document.getElementById('edit-asm-select').value;
   if(idx===''){
     editPanelAsmIdx=null;
