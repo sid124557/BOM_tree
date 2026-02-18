@@ -2127,7 +2127,7 @@ function saveEditChanges(){
 }
 
 /* ════════ DIFF FUNCTIONS ════════ */
-function getComparePool(){return bomVersions.length ? bomVersions : assemblies;}
+function getComparePool(){return bomVersions.length ? [...assemblies, ...bomVersions] : assemblies;}
 
 function populateDiffSelects(){
   const pool=getComparePool();
