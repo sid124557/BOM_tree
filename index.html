@@ -47,7 +47,19 @@
 .edit-mode-btn svg{opacity:.7;}
 .edit-mode-btn.active svg{opacity:1;}
 
-.edit-actions-bar{display:flex;gap:6px;}
+.edit-actions-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.edit-helper{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,200,150,.06);border:1px solid var(--accent-bd);border-radius:8px;font-size:11px;color:var(--fg2);}
+.edit-helper strong{color:var(--accent);font-weight:700;}
+.edit-context-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.28);border-radius:8px;}
+.edit-context-k{font-size:10px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.08em;}
+.edit-context-v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.edit-parent-select{min-width:260px;background:rgba(0,0,0,.45);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 9px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.edit-parent-select:focus{outline:none;border-color:rgba(59,130,246,.35);box-shadow:0 0 0 2px rgba(59,130,246,.12);}
+.edit-indent-controls{display:flex;align-items:center;gap:4px;}
+.edit-indent-btn{width:24px;height:24px;border:1px solid var(--bd2);border-radius:4px;background:rgba(255,255,255,.04);color:var(--fg2);font-size:13px;font-weight:700;cursor:pointer;line-height:1;transition:all .15s;}
+.edit-indent-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
+.edit-indent-input{width:52px;text-align:center;}
+.edit-level-chip{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--fg3);background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:4px;padding:4px 6px;text-align:center;}
 .edit-action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--bd2);color:var(--fg2);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .edit-action-btn:hover{background:rgba(255,255,255,.09);color:var(--fg);transform:translateY(-1px);}
 .edit-action-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
@@ -60,6 +72,9 @@
 
 .edit-row{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center;transition:background .15s;}
 .edit-row:hover{background:var(--hover);}
+.edit-row.selected{background:rgba(0,200,150,.08);outline:1px solid var(--accent-bd);outline-offset:-1px;}
+.edit-row.selected .edit-level-badge{box-shadow:0 0 0 1px var(--accent-bd) inset;}
+
 .edit-row:last-child{border-bottom:none;}
 .edit-row.dragging{opacity:.4;}
 .edit-row.drag-over{border-top:2px solid var(--accent);margin-top:-2px;}
@@ -90,6 +105,7 @@
 .edit-icon-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
 .edit-icon-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25);}
 .edit-icon-btn.dup:hover{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25);}
+.edit-icon-btn.add:hover{background:rgba(59,130,246,.14);color:#60a5fa;border-color:rgba(59,130,246,.3);}
 
 .edit-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:12px;color:var(--fg3);text-align:center;}
 
@@ -538,15 +554,38 @@ textarea::placeholder{color:var(--fg3);}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Part
         </button>
+        <button class="edit-action-btn" onclick="addChildPartFromSelection()" title="Add part under selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6a2 2 0 0 0 2 2h14"/><path d="M14 10h6"/><path d="M17 7v6"/></svg>
+          Add Child
+        </button>
+        <button class="edit-action-btn" onclick="addSiblingPartFromSelection()" title="Add part below selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h10"/><path d="M17 8v8"/><path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/></svg>
+          Add Below
+        </button>
         <button class="edit-action-btn" onclick="undoLastChange()" title="Undo last change">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           Undo
+        </button>
+        <button class="edit-action-btn" onclick="cloneEditedAssembly()" title="Create a new BOM from this edited assembly">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          New BOM from Edit
         </button>
         <button class="edit-action-btn primary" onclick="saveEditChanges()" title="Save changes">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Save Changes
         </button>
       </div>
+    </div>
+
+    <div class="edit-helper">
+      <strong>Tip:</strong> Click a row first, then use <em>Add Child</em>/<em>Add Below</em> for targeted insertion in sub-assemblies. Use <em>Indent</em> controls for quick hierarchy fixes, then <em>New BOM from Edit</em> to clone.
+    </div>
+
+    <div class="edit-context-bar" id="edit-context-bar" style="display:none">
+      <span class="edit-context-k">Selected Row</span>
+      <span class="edit-context-v" id="edit-selected-row-label">—</span>
+      <span class="edit-context-k">Parent Sub-Assembly</span>
+      <select class="edit-parent-select" id="edit-parent-select" onchange="applySelectedRowParent()"></select>
     </div>
 
     <!-- Edit Table View -->
@@ -660,6 +699,7 @@ let editPanelAsmIdx=null; // Track assembly being edited in edit panel
 let editViewMode='edit'; // 'edit' or 'view'
 let editHistory=[]; // For undo functionality
 let editDraggedRow=null;
+let editSelectedRowIdx=null;
 
 /* ════════ PARSE ════════ */
 function parseData(raw){
@@ -1194,16 +1234,185 @@ function exportCurrentExcel(){
 
 function saveAsNewBOM(){
   if(!assemblies.length){toast('No data to save');return;}
-  const name=prompt('Enter new BOM name:',assemblies[0].material+'-NEW');
-  if(!name) return;
-  assemblies.forEach(a=>{
-    a.material=name;
-    a.version=(a.version||'R1')+'-NEW';
-  });
-  saveCurrentBom();
-  toggleExportMenu();
+  const sourceIdx=editPanelAsmIdx!==null ? editPanelAsmIdx : 0;
+  createClonedBomFromAssembly(sourceIdx,{fromExportMenu:true});
+}
+
+function cloneEditedAssembly(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  createClonedBomFromAssembly(editPanelAsmIdx,{fromExportMenu:false});
+}
+
+function createClonedBomFromAssembly(sourceIdx,{fromExportMenu=false}={}){
+  const src=assemblies[sourceIdx];
+  if(!src){toast('Source assembly not found');return;}
+
+  const newMaterial=prompt('New BOM code / material:',`${src.material}-NEW`);
+  if(!newMaterial) return;
+  const newVersion=prompt('New BOM version:',`${src.version||'R1'}-NEW`);
+  if(newVersion===null) return;
+  const newProject=prompt('Project name for new BOM:',src.project||src.description||'Derived BOM');
+  if(newProject===null) return;
+
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.material=newMaterial.trim()||`${src.material}-NEW`;
+  copy.version=(newVersion||`${src.version||'R1'}-NEW`).trim();
+  copy.project=(newProject||src.project||src.description||'Derived BOM').trim();
+  copy.description=copy.project;
+  copy.date=new Date().toISOString().slice(0,10);
+  copy.rows=(copy.rows||[]).map(r=>({...r,id:uid()}));
+  copy.tree=buildTree(copy.rows);
+
+  const id=`${copy.project||'P'}|${copy.version||'R'}|${copy.material}`;
+  const existing=bomVersions.findIndex(v=>v.id===id);
+  const snap={...JSON.parse(JSON.stringify(copy)),id,savedAt:new Date().toISOString()};
+  if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
+
+  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length]});
+  renderBomLibrary();
   renderNav();
   renderAll();
+  updateStats();
+  populateDiffSelects();
+  populateBulkTargets();
+  populateEditSelect();
+  if(fromExportMenu) toggleExportMenu();
+  toast(`New BOM created from ${src.material}`);
+}
+
+function getSubtreeRange(rows,startIdx){
+  const base=(rows[startIdx]?.level)||1;
+  let end=startIdx+1;
+  while(end<rows.length && (rows[end].level||1)>base) end++;
+  return [startIdx,end];
+}
+
+function shiftSubtreeLevels(rows,startIdx,newRootLevel){
+  if(!rows[startIdx]) return;
+  const [s,e]=getSubtreeRange(rows,startIdx);
+  const rootLevel=rows[s].level||1;
+  const delta=newRootLevel-rootLevel;
+  if(delta===0) return;
+  for(let i=s;i<e;i++){
+    rows[i].level=Math.max(1,Math.min(6,(rows[i].level||1)+delta));
+  }
+}
+
+function changeRowLevel(idx,delta){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const next=Math.max(1,Math.min(6,(parseInt(asm.rows[idx].level,10)||1)+delta));
+  if(next===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  shiftSubtreeLevels(asm.rows,idx,next);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+}
+
+function setRowIndent(idx,indentValue){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const indent=Math.max(0,Math.min(5,parseInt(indentValue,10)||0));
+  const nextLevel=indent+1;
+  if(nextLevel===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  shiftSubtreeLevels(asm.rows,idx,nextLevel);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+}
+
+function renderEditContextBar(){
+  const bar=document.getElementById('edit-context-bar');
+  const label=document.getElementById('edit-selected-row-label');
+  const sel=document.getElementById('edit-parent-select');
+  if(!bar||!label||!sel){return;}
+  if(editPanelAsmIdx===null || editSelectedRowIdx===null){
+    bar.style.display='none';
+    return;
+  }
+  const asm=assemblies[editPanelAsmIdx];
+  const row=asm?.rows?.[editSelectedRowIdx];
+  if(!row){bar.style.display='none';return;}
+  bar.style.display='flex';
+  label.textContent=`${row.component||'—'} (L${row.level||1})`;
+
+  const targetLevel=(row.level||1)-1;
+  sel.innerHTML='';
+  if(targetLevel<1){
+    const o=document.createElement('option');
+    o.value='';
+    o.textContent='Top-level part (no parent required)';
+    sel.appendChild(o);
+    sel.disabled=true;
+    return;
+  }
+
+  sel.disabled=false;
+  const currentParent=findCurrentParentIndex(asm.rows,editSelectedRowIdx);
+  const [ss,se]=getSubtreeRange(asm.rows,editSelectedRowIdx);
+  const opts=[];
+  asm.rows.forEach((r,i)=>{
+    if(i>=ss && i<se) return;
+    if((r.level||1)===targetLevel) opts.push({i,r});
+  });
+  if(!opts.length){
+    const o=document.createElement('option');
+    o.value='';
+    o.textContent=`No L${targetLevel} parent found before/around this row`; 
+    sel.appendChild(o);
+    sel.disabled=true;
+    return;
+  }
+  opts.forEach(({i,r})=>{
+    const o=document.createElement('option');
+    o.value=String(i);
+    o.textContent=`${r.component||'—'} (row ${i+1}, L${r.level})`;
+    if(currentParent===i) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function findCurrentParentIndex(rows,idx){
+  const level=(rows[idx]?.level)||1;
+  for(let i=idx-1;i>=0;i--){
+    if((rows[i].level||1)===level-1) return i;
+  }
+  return null;
+}
+
+function moveSelectedSubtreeToParent(parentIdx){
+  if(editPanelAsmIdx===null || editSelectedRowIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  const rows=asm.rows;
+  const idx=editSelectedRowIdx;
+  if(!rows[idx] || !rows[parentIdx]) return;
+
+  const [ss,se]=getSubtreeRange(rows,idx);
+  if(parentIdx>=ss && parentIdx<se){toast('Cannot set parent inside its own subtree');return;}
+
+  const extracted=rows.splice(ss,se-ss);
+  let targetParentIdx=parentIdx;
+  if(parentIdx>ss) targetParentIdx-=extracted.length;
+  const targetInsert=subtreeEndIndex(rows,targetParentIdx);
+
+  const targetLevel=(rows[targetParentIdx].level||1)+1;
+  const delta=targetLevel-(extracted[0].level||1);
+  extracted.forEach(r=>{r.level=Math.max(1,Math.min(6,(r.level||1)+delta));});
+  rows.splice(targetInsert,0,...extracted);
+  editSelectedRowIdx=targetInsert;
+  asm.tree=buildTree(rows);
+  renderEditTable();
+  toast(`Moved under ${rows[targetParentIdx].component||'selected parent'}`);
+}
+
+function applySelectedRowParent(){
+  const sel=document.getElementById('edit-parent-select');
+  if(!sel || sel.disabled || sel.value==='') return;
+  const parentIdx=parseInt(sel.value,10);
+  if(Number.isNaN(parentIdx)) return;
+  moveSelectedSubtreeToParent(parentIdx);
 }
 
 function downloadFile(content,filename,type){
@@ -1419,6 +1628,7 @@ function selectEditAsm(){
   }
   editPanelAsmIdx=parseInt(idx);
   editHistory=[];
+  editSelectedRowIdx=null;
   renderEditTable();
   toast('Assembly loaded for editing');
 }
@@ -1434,6 +1644,7 @@ function renderEditTable(){
   if(editPanelAsmIdx===null) return;
   const asm=assemblies[editPanelAsmIdx];
   const container=document.getElementById('edit-table-container');
+  if(editSelectedRowIdx!==null && (editSelectedRowIdx<0 || editSelectedRowIdx>=asm.rows.length)) editSelectedRowIdx=null;
   const isEdit=editViewMode==='edit';
   
   container.innerHTML='';
@@ -1474,12 +1685,18 @@ function renderEditTable(){
   });
   
   container.appendChild(body);
+  renderEditContextBar();
 }
 
 function createEditRow(row,idx,isEdit){
   const rowEl=document.createElement('div');
-  rowEl.className='edit-row';
+  rowEl.className='edit-row'+(editSelectedRowIdx===idx?' selected':'');
   rowEl.dataset.rowIdx=idx;
+  rowEl.onclick=e=>{
+    if(e.target.closest('input,button,select,textarea')) return;
+    editSelectedRowIdx=idx;
+    renderEditTable();
+  };
   rowEl.draggable=isEdit;
   
   if(isEdit){
@@ -1512,6 +1729,7 @@ function createEditRow(row,idx,isEdit){
       const asm=assemblies[editPanelAsmIdx];
       const item=asm.rows.splice(fromIdx,1)[0];
       asm.rows.splice(toIdx,0,item);
+      editSelectedRowIdx=toIdx;
       asm.tree=buildTree(asm.rows);
       
       renderEditTable();
@@ -1538,12 +1756,43 @@ function createEditRow(row,idx,isEdit){
   levelBadge.textContent=`L${row.level}`;
   rowEl.appendChild(levelBadge);
   
-  // Indent indicator
-  const indentEl=document.createElement('div');
-  indentEl.className='edit-text';
-  indentEl.textContent='└'.repeat(indent);
-  indentEl.style.color='var(--fg3)';
-  rowEl.appendChild(indentEl);
+  // Indent / level controls
+  if(isEdit){
+    const indentWrap=document.createElement('div');
+    indentWrap.className='edit-indent-controls';
+
+    const decBtn=document.createElement('button');
+    decBtn.className='edit-indent-btn';
+    decBtn.type='button';
+    decBtn.textContent='−';
+    decBtn.title='Outdent (decrease level)';
+    decBtn.onclick=()=>changeRowLevel(idx,-1);
+
+    const indentInput=document.createElement('input');
+    indentInput.className='edit-input edit-indent-input';
+    indentInput.type='number';
+    indentInput.min='0';
+    indentInput.max='5';
+    indentInput.value=String(indent);
+    indentInput.title='Indent level (0 = top level)';
+    indentInput.onchange=()=>setRowIndent(idx,indentInput.value);
+
+    const incBtn=document.createElement('button');
+    incBtn.className='edit-indent-btn';
+    incBtn.type='button';
+    incBtn.textContent='+';
+    incBtn.title='Indent (increase level)';
+    incBtn.onclick=()=>changeRowLevel(idx,1);
+
+    indentWrap.append(decBtn,indentInput,incBtn);
+    rowEl.appendChild(indentWrap);
+  }else{
+    const indentEl=document.createElement('div');
+    indentEl.className='edit-level-chip';
+    indentEl.textContent=`${indent}`;
+    indentEl.title=`Indent: ${indent}`;
+    rowEl.appendChild(indentEl);
+  }
   
   // Component
   if(isEdit){
@@ -1625,6 +1874,18 @@ function createEditRow(row,idx,isEdit){
     const actions=document.createElement('div');
     actions.className='edit-row-actions';
     
+    const childBtn=document.createElement('button');
+    childBtn.className='edit-icon-btn add';
+    childBtn.title='Add child under this row';
+    childBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v6a2 2 0 0 0 2 2h12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    childBtn.onclick=()=>addChildPart(idx);
+
+    const belowBtn=document.createElement('button');
+    belowBtn.className='edit-icon-btn add';
+    belowBtn.title='Add below this row';
+    belowBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="14" y2="12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    belowBtn.onclick=()=>addSiblingBelow(idx);
+
     const dupBtn=document.createElement('button');
     dupBtn.className='edit-icon-btn dup';
     dupBtn.title='Duplicate';
@@ -1637,6 +1898,8 @@ function createEditRow(row,idx,isEdit){
     delBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     delBtn.onclick=()=>deleteEditRow(idx);
     
+    actions.appendChild(childBtn);
+    actions.appendChild(belowBtn);
     actions.appendChild(dupBtn);
     actions.appendChild(delBtn);
     rowEl.appendChild(actions);
@@ -1665,13 +1928,67 @@ function undoLastChange(){
 
 function addNewRowEdit(){
   if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
-  saveEditHistory();
+  if(editSelectedRowIdx!==null){
+    addSiblingBelow(editSelectedRowIdx);
+    return;
+  }
+  insertPartAt({insertAt:null,level:1,message:'New top-level part added'});
+}
+
+function addChildPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Child');return;}
+  addChildPart(editSelectedRowIdx);
+}
+
+function addSiblingPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Below');return;}
+  addSiblingBelow(editSelectedRowIdx);
+}
+
+function subtreeEndIndex(rows,startIdx){
+  const base=(rows[startIdx]?.level)||1;
+  let i=startIdx+1;
+  while(i<rows.length && (rows[i].level||1)>base) i++;
+  return i;
+}
+
+function addChildPart(idx){
   const asm=assemblies[editPanelAsmIdx];
-  const newRow={level:1,component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
-  asm.rows.push(newRow);
+  if(!asm || !asm.rows[idx]) return;
+  const level=Math.min(6,(asm.rows[idx].level||1)+1);
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:`Child part added under ${asm.rows[idx].component||'row'}`});
+}
+
+function addSiblingBelow(idx){
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const level=asm.rows[idx].level||1;
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:'Part added below selected row'});
+}
+
+function insertPartAt({insertAt=null,level=1,message='New part added'}={}){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  saveEditHistory();
+  const newRow={
+    level:Math.max(1,Math.min(6,level||1)),
+    component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),
+    description:'New component',
+    qty:'1',
+    uom:'NO',
+    supplier:'',
+    id:uid()
+  };
+  const at=(insertAt===null || insertAt>asm.rows.length) ? asm.rows.length : Math.max(0,insertAt);
+  asm.rows.splice(at,0,newRow);
+  editSelectedRowIdx=at;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
-  toast('New part added');
+  toast(message);
 }
 
 function duplicateEditRow(idx){
@@ -1681,6 +1998,7 @@ function duplicateEditRow(idx){
   const row=asm.rows[idx];
   const newRow={...row,id:uid(),component:row.component+'-COPY'};
   asm.rows.splice(idx+1,0,newRow);
+  editSelectedRowIdx=idx+1;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
   toast('Row duplicated');
@@ -1692,6 +2010,10 @@ function deleteEditRow(idx){
   saveEditHistory();
   const asm=assemblies[editPanelAsmIdx];
   asm.rows.splice(idx,1);
+  if(editSelectedRowIdx!==null){
+    if(editSelectedRowIdx===idx) editSelectedRowIdx=Math.min(idx,asm.rows.length-1);
+    else if(editSelectedRowIdx>idx) editSelectedRowIdx--;
+  }
   asm.tree=buildTree(asm.rows);
   renderEditTable();
   toast('Row deleted');
