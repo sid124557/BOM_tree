@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOM Tree Viewer</title>
+<title>BOM Editor Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -18,13 +18,49 @@
   --l4:#f59e0b; --l4b:rgba(245,158,11,.14);
   --l5:#ec4899; --l5b:rgba(236,72,153,.14);
   --l6:#64748b; --l6b:rgba(100,116,139,.14);
-  /* diff colours */
   --d-shared:#1e2a3a; --d-shared-fg:#8a9ab8;
   --d-a:#2a1520; --d-a-bd:rgba(239,68,68,.3); --d-a-fg:#ef4444;
   --d-b:#102a1e; --d-b-bd:rgba(34,197,94,.3); --d-b-fg:#22c55e;
   --d-qty:#2a2010; --d-qty-bd:rgba(245,158,11,.3); --d-qty-fg:#f59e0b;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── EDIT MODE ── */
+.edit-mode-active{position:relative;}
+.edit-mode-active::before{content:'';position:absolute;inset:0;border:2px solid var(--accent);border-radius:12px;pointer-events:none;animation:editPulse 2s ease-in-out infinite;}
+@keyframes editPulse{0%,100%{opacity:.3;}50%{opacity:.6;}}
+.edit-mode .part-row{background:rgba(0,200,150,.015);}
+.edit-mode .part-row:hover{background:rgba(0,200,150,.05);}
+.edit-field{background:rgba(0,0,0,.5);border:1px solid var(--bd2);border-radius:4px;color:var(--fg);font-family:inherit;font-size:inherit;padding:3px 6px;width:100%;transition:border-color .2s,background .2s;}
+.edit-field:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,.7);box-shadow:0 0 0 2px var(--accent-bg);}
+.edit-field.qty{text-align:right;}
+.edit-actions{display:none;gap:3px;}
+.edit-mode .edit-actions{display:flex;}
+.part-row:hover .edit-actions{opacity:1;}
+.edit-btn{width:22px;height:22px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--bd2);border-radius:4px;color:var(--fg3);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.edit-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
+.edit-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25);}
+.edit-btn.add:hover{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25);}
+.drag-handle{cursor:move;opacity:.2;transition:opacity .2s;display:none;}
+.edit-mode .drag-handle{display:grid;}
+.part-row:hover .drag-handle{opacity:.7;}
+.drag-handle:hover{opacity:1!important;color:var(--accent);}
+.part-wrap.dragging{opacity:.4;transform:scale(.98);}
+.part-wrap.drag-over-top{border-top:2px solid var(--accent);margin-top:-2px;}
+.part-wrap.drag-over-bottom{border-bottom:2px solid var(--accent);margin-bottom:-2px;}
+.add-row-zone{padding:8px 15px;border-top:1px dashed var(--bd2);background:rgba(0,200,150,.015);display:none;align-items:center;justify-content:center;gap:6px;}
+.edit-mode .add-row-zone{display:flex;}
+.add-row-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:5px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;}
+.add-row-btn:hover{background:rgba(34,197,94,.18);transform:translateY(-1px);}
+.export-menu{position:relative;}
+.export-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--bd2);border-radius:8px;padding:4px;min-width:180px;display:none;flex-direction:column;gap:2px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:100;}
+.export-dropdown.show{display:flex;}
+.export-opt{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:5px;color:var(--fg2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.export-opt:hover{background:var(--hover);color:var(--fg);}
+.export-opt svg{opacity:.7;flex-shrink:0;}
+.mode-toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--bd2);color:var(--fg2);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.mode-toggle:hover{background:rgba(255,255,255,.08);color:var(--fg);}
+.mode-toggle.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent);}
 
 /* ── TAB BAR ── */
 .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--panel);}
@@ -37,8 +73,6 @@
 /* ── DIFF PANEL ── */
 .diff-panel{flex:1;overflow-y:auto;padding:18px 26px;display:none;flex-direction:column;gap:14px;}
 .diff-panel.visible{display:flex;}
-
-/* diff selector bar */
 .diff-selectors{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;background:var(--card);border:1px solid var(--bd2);border-radius:9px;padding:14px 16px;}
 .diff-sel-side{display:flex;flex-direction:column;gap:6px;}
 .diff-sel-label{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;}
@@ -49,8 +83,6 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-vs{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--fg3);text-align:center;padding:6px;}
 .diff-run-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
 .diff-run-btn:hover{background:#00dfb8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,200,150,.35);}
-
-/* diff summary cards */
 .diff-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .diff-card{border-radius:8px;padding:12px 14px;border:1px solid;}
 .diff-card.shared{background:rgba(30,42,58,.5);border-color:rgba(138,154,184,.2);}
@@ -64,8 +96,6 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-card.qty-diff .diff-card-n{color:var(--d-qty-fg);}
 .diff-card-label{font-size:10px;font-weight:600;color:var(--fg3);margin-top:4px;text-transform:uppercase;letter-spacing:.07em;}
 .diff-card-sub{font-size:9px;color:var(--fg3);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
-
-/* diff table */
 .diff-table-wrap{background:var(--card);border:1px solid var(--bd2);border-radius:9px;overflow:hidden;}
 .compare-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
 .compare-pane{border:1px solid var(--bd2);border-radius:9px;background:var(--card);overflow:hidden;}
@@ -83,23 +113,19 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-table-head{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bd);}
 .diff-table-head > div{padding:8px 14px;font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 .diff-table-head > div:not(:last-child){border-right:1px solid var(--bd);}
-
 .diff-row{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;border-bottom:1px solid var(--bd);transition:filter .1s;}
 .diff-row:last-child{border-bottom:none;}
 .diff-row:hover{filter:brightness(1.15);}
-
 .diff-row.shared{background:var(--d-shared);}
 .diff-row.only-a{background:var(--d-a);}
 .diff-row.only-b{background:var(--d-b);}
 .diff-row.qty-diff{background:var(--d-qty);}
-
 .diff-tag{display:flex;align-items:center;justify-content:center;padding:8px 6px;border-right:1px solid var(--bd);}
 .diff-tag span{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em;}
 .diff-row.shared .diff-tag span{background:rgba(138,154,184,.12);color:var(--d-shared-fg);}
 .diff-row.only-a .diff-tag span{background:rgba(239,68,68,.15);color:var(--d-a-fg);}
 .diff-row.only-b .diff-tag span{background:rgba(34,197,94,.15);color:var(--d-b-fg);}
 .diff-row.qty-diff .diff-tag span{background:rgba(245,158,11,.15);color:var(--d-qty-fg);}
-
 .diff-cell{padding:8px 14px;border-right:1px solid var(--bd);display:flex;flex-direction:column;gap:2px;min-width:0;}
 .diff-cell:last-child{border-right:none;}
 .diff-cell-code{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -110,8 +136,6 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-row.only-b .diff-cell-qty{color:var(--d-b-fg);}
 .diff-row.qty-diff .diff-cell-qty{color:var(--d-qty-fg);}
 .diff-cell-empty{color:var(--fg3);font-style:italic;font-size:10px;align-self:center;}
-
-/* diff filter chips */
 .diff-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .diff-filter-label{font-size:10px;color:var(--fg3);font-weight:600;}
 .diff-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;}
@@ -124,20 +148,15 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-chip.qty-diff{border-color:var(--d-qty-bd);color:var(--d-qty-fg);background:transparent;}
 .diff-chip.qty-diff.on{background:rgba(42,32,16,.8);}
 .diff-chip-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
-
-/* diff level badge inside diff */
 .dlv{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.08);color:var(--fg3);margin-left:4px;flex-shrink:0;}
-
 .diff-empty{text-align:center;padding:48px 20px;color:var(--fg3);font-size:12px;}
-
-/* export diff btn */
 .diff-export{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid var(--bd2);color:var(--fg2);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;margin-left:auto;}
 .diff-export:hover{background:rgba(255,255,255,.09);color:var(--fg);}
+
 body{font-family:'Syne',sans-serif;background:radial-gradient(circle at top left,#0f1727 0%,#07090f 42%,#05070d 100%);color:var(--fg);min-height:100vh;display:grid;grid-template-columns:320px 1fr;height:100vh;overflow:hidden;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;z-index:0;}
 body::after{content:'';position:fixed;inset:0;background:radial-gradient(550px 320px at 10% -5%,rgba(59,130,246,.14),transparent 70%),radial-gradient(460px 280px at 90% -15%,rgba(0,200,150,.1),transparent 70%);pointer-events:none;z-index:0;}
 
-/* SIDEBAR */
 .sidebar{position:relative;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0)),var(--panel);border-right:1px solid var(--bd2);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(6px);}
 .sb-head{padding:20px 20px 14px;border-bottom:1px solid var(--bd);flex-shrink:0;}
 .logo{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
@@ -192,14 +211,13 @@ textarea::placeholder{color:var(--fg3);}
 .stat-n{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--accent);line-height:1;}
 .stat-k{font-size:8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
 
-/* MAIN */
 .main{position:relative;z-index:1;display:flex;flex-direction:column;overflow:hidden;}
 .main-hdr{padding:18px 26px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0;backdrop-filter:blur(8px);background:linear-gradient(180deg,rgba(17,24,34,.9),rgba(17,24,34,.68));}
 .main-title-wrap{flex:1;min-width:0;}
 .main-eyebrow{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
 .main-asm-name{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .main-asm-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg2);margin-top:2px;}
-.ctrls{display:flex;align-items:center;gap:6px;}
+.ctrls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .sw{position:relative;}
 .sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--fg3);pointer-events:none;}
 .search{background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:999px;padding:7px 12px 7px 28px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;width:190px;transition:all .2s;}
@@ -209,7 +227,6 @@ textarea::placeholder{color:var(--fg3);}
 
 .tree-area{flex:1;overflow-y:auto;padding:18px 26px;}
 
-/* ASSEMBLY BLOCK */
 .asm-block{margin-bottom:18px;border:1px solid var(--bd2);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.015),rgba(255,255,255,0)),var(--card);box-shadow:var(--glow);}
 .asm-bar{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .15s;user-select:none;}
 .asm-bar:hover{background:var(--hover);}
@@ -221,17 +238,16 @@ textarea::placeholder{color:var(--fg3);}
 .asm-cnt{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;}
 .asm-chev{transition:transform .25s;color:var(--fg3);}
 
-/* COLUMN HEADER */
 .col-hdr{display:grid;gap:6px;padding:6px 15px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--bd);}
 .col-hdr span{font-size:8px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 
-/* 7-col grid: toggle | level | component | description | qty | uom | copy */
-.rg{display:grid;grid-template-columns:18px 56px 1fr 1.4fr 76px 48px 24px;gap:6px;align-items:center;}
+/* 8-col grid for edit mode: drag | toggle | level | component | description | qty | uom | actions */
+.rg{display:grid;grid-template-columns:22px 18px 56px 1fr 1.4fr 76px 48px 80px;gap:6px;align-items:center;}
+.rg.view-mode{grid-template-columns:18px 56px 1fr 1.4fr 76px 48px 24px;}
 
 .parts-body{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
 .parts-body.open{max-height:999999px;}
 
-/* PART ROW */
 .part-wrap{border-bottom:1px solid var(--bd);}
 .part-wrap:last-child{border-bottom:none;}
 .part-row{padding:7px 15px;cursor:pointer;transition:background .12s;user-select:none;}
@@ -260,17 +276,14 @@ textarea::placeholder{color:var(--fg3);}
 .part-row:hover .copy-btn{opacity:1;}
 .copy-btn:hover{background:var(--accent-bg);color:var(--accent);}
 
-/* CHILDREN INDENT */
 .child-wrap{overflow:hidden;max-height:0;transition:max-height .28s cubic-bezier(.4,0,.2,1);border-left:2px solid var(--bd2);margin-left:26px;background:rgba(0,0,0,.1);}
 .child-wrap.open{max-height:999999px;}
 
-/* EMPTY */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 24px;gap:12px;color:var(--fg3);text-align:center;}
 .empty-ring{width:52px;height:52px;border:2px dashed rgba(255,255,255,.08);border-radius:12px;display:grid;place-items:center;}
 .empty-title{font-size:14px;font-weight:700;color:var(--fg2);}
 .empty-desc{font-size:12px;line-height:1.65;max-width:380px;}
 
-/* TOAST */
 .toast{position:fixed;bottom:16px;right:16px;background:var(--card);border:1px solid var(--accent-bd);color:var(--fg);padding:8px 13px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;opacity:0;transform:translateY(10px);transition:all .2s;z-index:999;pointer-events:none;box-shadow:var(--glow);}
 .toast.on{opacity:1;transform:translateY(0);}
 
@@ -282,23 +295,21 @@ textarea::placeholder{color:var(--fg3);}
 @media(max-width:1080px){
   body{grid-template-columns:290px 1fr;}
   .diff-summary{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .compare-split{grid-template-columns:1fr;}
 }
 
 @media(max-width:860px){
-  body{grid-template-columns:1fr;height:auto;overflow:auto;}
-  .sidebar{height:auto;max-height:none;}
-  .main{height:auto;}
-  .tree-area{overflow:visible;padding:14px;}
-  .main-hdr{padding:14px;position:sticky;top:0;z-index:5;}
-  .search{width:100%;}
-  .search:focus{width:100%;}
-  .ctrls{width:100%;}
-  .sw{flex:1;}
-  .tab-btn{flex:1;justify-content:center;}
+  body{grid-template-columns:1fr;}
+  .sidebar{height:auto;}
+  .tree-area{padding:14px;}
+  .main-hdr{padding:14px;}
+  .search{width:150px;}
+  .search:focus{width:180px;}
+  .rg{grid-template-columns:18px 42px 1fr 1fr 60px 40px 60px;}
+  .rg.view-mode{grid-template-columns:18px 42px 1fr 1fr 60px 40px 24px;}
   .diff-selectors{grid-template-columns:1fr;}
   .diff-vs{display:none;}
   .diff-summary{grid-template-columns:1fr;}
-  .rg{grid-template-columns:18px 42px 1fr 1fr 64px 42px 24px;}
 }
 </style>
 </head>
@@ -314,9 +325,9 @@ textarea::placeholder{color:var(--fg3);}
           <line x1="14" y1="17.5" x2="17.5" y2="17.5"/><line x1="21" y1="17.5" x2="17.5" y2="17.5"/>
         </svg>
       </div>
-      <h1>BOM <span>Viewer</span></h1>
+      <h1>BOM <span>Editor Pro</span></h1>
     </div>
-    <div class="sb-sub">Bill of Materials — Interactive Tree</div>
+    <div class="sb-sub">Bill of Materials — Edit & Compare</div>
   </div>
 
   <div class="sb-input">
@@ -383,6 +394,25 @@ textarea::placeholder{color:var(--fg3);}
       <div class="main-asm-code" id="hdr-code">Load data to begin</div>
     </div>
     <div class="ctrls">
+      <div class="export-menu">
+        <button class="ic-btn" title="Export options" onclick="toggleExportMenu()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <div class="export-dropdown" id="export-dropdown">
+          <div class="export-opt" onclick="exportCurrentCSV()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            Export CSV
+          </div>
+          <div class="export-opt" onclick="exportCurrentExcel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Export TSV (Excel)
+          </div>
+          <div class="export-opt" onclick="saveAsNewBOM()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save as New BOM
+          </div>
+        </div>
+      </div>
       <div class="sw">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search" id="search" type="text" placeholder="Search components…" oninput="doSearch(this.value)">
@@ -396,7 +426,6 @@ textarea::placeholder{color:var(--fg3);}
     </div>
   </div>
 
-  <!-- TAB BAR -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-tree" onclick="switchTab('tree')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
@@ -408,7 +437,6 @@ textarea::placeholder{color:var(--fg3);}
     </button>
   </div>
 
-  <!-- TREE VIEW -->
   <div class="tree-area" id="tree">
     <div class="empty">
       <div class="empty-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
@@ -417,15 +445,13 @@ textarea::placeholder{color:var(--fg3);}
     </div>
   </div>
 
-  <!-- DIFF VIEW -->
   <div class="diff-panel" id="diff-panel">
-    <!-- Selector bar -->
     <div class="diff-selectors">
       <div class="diff-sel-side">
         <div class="diff-sel-label">Assembly A</div>
         <div class="diff-sel-inner">
           <div class="diff-dot" id="dot-a" style="background:#ef4444"></div>
-          <select class="diff-select" id="sel-a"><option value="">— Select assembly —</option></select>
+          <select class="diff-select" id="sel-a"><option value="">— Select BOM —</option></select>
         </div>
       </div>
       <div class="diff-vs">VS</div>
@@ -433,7 +459,7 @@ textarea::placeholder{color:var(--fg3);}
         <div class="diff-sel-label">Assembly B</div>
         <div class="diff-sel-inner">
           <div class="diff-dot" id="dot-b" style="background:#22c55e"></div>
-          <select class="diff-select" id="sel-b"><option value="">— Select assembly —</option></select>
+          <select class="diff-select" id="sel-b"><option value="">— Select BOM —</option></select>
         </div>
       </div>
     </div>
@@ -447,7 +473,6 @@ textarea::placeholder{color:var(--fg3);}
         Download Comparison CSV
       </button>
     </div>
-    <!-- Summary cards -->
     <div class="diff-summary" id="diff-summary" style="display:none">
       <div class="diff-card shared">
         <div class="diff-card-n" id="dc-shared">0</div>
@@ -470,7 +495,6 @@ textarea::placeholder{color:var(--fg3);}
         <div class="diff-card-sub">Same part, different qty</div>
       </div>
     </div>
-    <!-- Filter chips -->
     <div class="diff-filters" id="diff-filters" style="display:none">
       <span class="diff-filter-label">Show:</span>
       <span class="diff-chip shared on" onclick="toggleChip(this,'shared')"><span class="diff-chip-dot"></span>Shared</span>
@@ -478,7 +502,6 @@ textarea::placeholder{color:var(--fg3);}
       <span class="diff-chip only-b on" onclick="toggleChip(this,'only-b')"><span class="diff-chip-dot"></span>Only B</span>
       <span class="diff-chip qty-diff on" onclick="toggleChip(this,'qty-diff')"><span class="diff-chip-dot"></span>Qty Diff</span>
     </div>
-    <!-- Results table -->
     <div class="diff-table-wrap" id="diff-table" style="display:none">
       <div class="diff-table-head">
         <div>Status</div>
@@ -497,7 +520,6 @@ textarea::placeholder{color:var(--fg3);}
         <div id="cmp-rows-b"></div>
       </div>
     </div>
-    <!-- Empty state -->
     <div class="diff-empty" id="diff-empty-state">Select two assemblies above and click <strong>Run Comparison</strong> to see what's different between them.</div>
   </div>
 </div>
@@ -508,72 +530,47 @@ textarea::placeholder{color:var(--fg3);}
 </div>
 
 <script>
-/* ─── PALETTE ─── */
 const COLORS=['#00c896','#3b82f6','#a78bfa','#f59e0b','#ec4899','#10b981','#f97316','#06b6d4','#84cc16','#e879f9'];
-
-/* ─── STATE ─── */
 let assemblies=[];
 let bomVersions=[];
 let compareRows=[];
+let draggedElement=null;
+let editingAsmIdx=null; // Track which assembly is being edited
 
-/* ════════════════════════════════════════════
-   PARSE
-   Tab-separated SAP BOM format:
-   col0=Plant  col1=Level  col2=Material  col3=MatDesc
-   col4=Component  col5=CompDesc  col6=Qty  col7=QtyBUn  col8=UOM
-════════════════════════════════════════════ */
+/* ════════ PARSE ════════ */
 function parseData(raw){
   const lines=raw.trim().split('\n');
   let start=0;
-  // skip header row if present
   const h=lines[0].split('\t');
   if(h[1]==='Level'||h[2]==='Material'||isNaN(parseInt(h[1]))){start=1;}
-
-  const asmMap=new Map(); // material → asm object
+  const asmMap=new Map();
   let colorIdx=0;
-
   for(let i=start;i<lines.length;i++){
     const c=lines[i].split('\t');
     if(c.length<6) continue;
-
-    const level    =parseInt((c[1]||'').trim());
-    const material =(c[2]||'').trim();
-    const matDesc  =(c[3]||'').trim();
+    const level=parseInt((c[1]||'').trim());
+    const material=(c[2]||'').trim();
+    const matDesc=(c[3]||'').trim();
     const component=(c[4]||'').trim();
-    const compDesc =(c[5]||'').trim();
-    const qty      =(c[6]||'').trim().replace(/,/g,'');
-    const uom      =(c[8]||'').trim();
-
+    const compDesc=(c[5]||'').trim();
+    const qty=(c[6]||'').trim().replace(/,/g,'');
+    const uom=(c[8]||'').trim();
     if(isNaN(level)||!material||!component) continue;
-
     if(!asmMap.has(material)){
-      asmMap.set(material,{
-        material, description:matDesc,
-        color:COLORS[colorIdx%COLORS.length],
-        rows:[]
-      });
+      asmMap.set(material,{material,description:matDesc,color:COLORS[colorIdx%COLORS.length],rows:[]});
       colorIdx++;
     }
     const asm=asmMap.get(material);
     if(!asm.description&&matDesc) asm.description=matDesc;
     asm.rows.push({level,component,description:compDesc,qty,uom,supplier:'',id:uid()});
   }
-
   return [...asmMap.values()];
 }
 
-/* ════════════════════════════════════════════
-   BUILD HIERARCHY
-   Key rule: after placing a node at level N,
-   clear all stack entries > N so the next node
-   at the same level doesn't get parented to a
-   sibling's deeper chain.
-════════════════════════════════════════════ */
 function buildTree(rows){
   const nodes=rows.map(r=>({...r,children:[],hasChildren:false}));
   const roots=[];
-  const stack={};  // level → last node placed there
-
+  const stack={};
   for(const node of nodes){
     let parent=null;
     for(let l=node.level-1;l>=1;l--){
@@ -582,24 +579,21 @@ function buildTree(rows){
     if(parent){parent.children.push(node);parent.hasChildren=true;}
     else{roots.push(node);}
     stack[node.level]=node;
-    // prune deeper levels
     Object.keys(stack).forEach(k=>{if(+k>node.level)delete stack[k];});
   }
   return roots;
 }
 
-/* ─── ENTRY POINT ─── */
+/* ════════ ENTRY POINT ════════ */
 function go(){
   const raw=document.getElementById('raw').value;
   if(!raw.trim()){toast('No data entered');return;}
   assemblies=parseData(raw);
   if(!assemblies.length){toast('Could not parse any assemblies');return;}
-
   const project=(document.getElementById('meta-project').value||'').trim();
   const version=(document.getElementById('meta-version').value||'').trim();
   const date=(document.getElementById('meta-date').value||'').trim();
   const supplier=(document.getElementById('meta-supplier').value||'').trim();
-
   assemblies.forEach(a=>{
     a.project=project||a.project||'Untitled';
     a.version=version||a.version||'R1';
@@ -607,11 +601,7 @@ function go(){
     a.rows.forEach(r=>{if(!r.supplier) r.supplier=supplier||'';});
     a.tree=buildTree(a.rows);
   });
-  renderNav();
-  renderAll();
-  updateStats();
-  populateDiffSelects();
-  populateBulkTargets();
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
 }
 
 function quickAddRows(){
@@ -707,7 +697,7 @@ function applyBulkEdit(){
   toast(`Bulk edit applied (${changed} updates)`);
 }
 
-/* ─── NAV ─── */
+/* ════════ NAV ════════ */
 function renderNav(){
   const el=document.getElementById('nav-list');
   el.innerHTML='';
@@ -739,7 +729,7 @@ function countNodes(nodes){
   return n;
 }
 
-/* ─── RENDER ALL ─── */
+/* ════════ RENDER ALL ════════ */
 function renderAll(){
   const area=document.getElementById('tree');
   area.innerHTML='';
@@ -757,11 +747,12 @@ function setHeader(name,code,color){
   document.getElementById('hdr-code').textContent=code||'';
 }
 
-/* ─── ASSEMBLY BLOCK ─── */
+/* ════════ ASSEMBLY BLOCK ════════ */
 function makeAsmBlock(asm,idx){
   const total=countNodes(asm.tree);
+  const isEditing = editingAsmIdx === idx;
   const block=document.createElement('div');
-  block.className='asm-block';
+  block.className='asm-block'+(isEditing?' edit-mode-active':'');
   block.dataset.asm=idx;
   block.style.cssText=`border-top:2px solid ${asm.color};`;
 
@@ -774,23 +765,39 @@ function makeAsmBlock(asm,idx){
       <div class="asm-bar-desc">${asm.description||'No description'}</div>
     </div>
     <div class="asm-meta">
+      <button class="mode-toggle ${isEditing?'active':''}" onclick="toggleAsmEdit(${idx})" title="${isEditing?'Exit edit mode':'Edit this assembly'}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        ${isEditing?'Done':'Edit'}
+      </button>
       <span class="asm-cnt" style="background:${asm.color}1a;color:${asm.color}">${total} parts</span>
       <svg class="asm-chev" style="transform:rotate(90deg)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
 
   const colHdr=document.createElement('div');
-  colHdr.className='col-hdr rg';
-  colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
+  colHdr.className='col-hdr rg'+(isEditing?'':' view-mode');
+  if(isEditing){
+    colHdr.innerHTML=`<span></span><span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span style="text-align:center">Actions</span>`;
+  }else{
+    colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
+  }
 
   const body=document.createElement('div');
-  body.className='parts-body open';
+  body.className='parts-body open'+(isEditing?' edit-mode':'');
   body.appendChild(colHdr);
 
   const partsDiv=document.createElement('div');
-  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color)));
+  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color,idx)));
   body.appendChild(partsDiv);
 
-  bar.onclick=()=>{
+  if(isEditing){
+    const addZone=document.createElement('div');
+    addZone.className='add-row-zone';
+    addZone.innerHTML=`<button class="add-row-btn" onclick="addNewRow(${idx})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Part</button>`;
+    body.appendChild(addZone);
+  }
+
+  bar.onclick=(e)=>{
+    if(e.target.closest('.mode-toggle')) return; // Don't toggle when clicking edit button
     const open=body.classList.toggle('open');
     bar.querySelector('.asm-chev').style.transform=open?'rotate(90deg)':'rotate(0)';
   };
@@ -800,48 +807,161 @@ function makeAsmBlock(asm,idx){
   return block;
 }
 
-/* ─── PART ROW (recursive) ─── */
-function makePartWrap(node,asmColor){
+/* ════════ PART ROW (EDITABLE) ════════ */
+function makePartWrap(node,asmColor,asmIdx){
+  const isEditing = editingAsmIdx === asmIdx;
   const wrap=document.createElement('div');
   wrap.className='part-wrap';
   wrap.dataset.comp=(node.component||'').toLowerCase();
   wrap.dataset.desc=(node.description||'').toLowerCase();
   wrap.dataset.nodeId=node.id;
+  wrap.dataset.asmIdx=asmIdx;
+  wrap.draggable=isEditing;
+
+  if(isEditing){
+    wrap.ondragstart=e=>{
+      draggedElement=wrap;
+      wrap.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    };
+    wrap.ondragend=e=>{
+      wrap.classList.remove('dragging');
+      document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>{
+        el.classList.remove('drag-over-top','drag-over-bottom');
+      });
+    };
+    wrap.ondragover=e=>{
+      e.preventDefault();
+      if(!draggedElement||draggedElement===wrap) return;
+      const rect=wrap.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      wrap.classList.remove('drag-over-top','drag-over-bottom');
+      if(e.clientY<mid){wrap.classList.add('drag-over-top');}
+      else{wrap.classList.add('drag-over-bottom');}
+    };
+    wrap.ondrop=e=>{
+      e.preventDefault();
+      if(!draggedElement||draggedElement===wrap) return;
+      const rect=wrap.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      const before=e.clientY<mid;
+      if(before){wrap.parentNode.insertBefore(draggedElement,wrap);}
+      else{wrap.parentNode.insertBefore(draggedElement,wrap.nextSibling);}
+      reorderRows(asmIdx);
+      toast('Row reordered');
+    };
+  }
 
   const lvCls=`l${Math.min(node.level,6)}`;
-
   const row=document.createElement('div');
-  row.className='part-row rg';
+  row.className='part-row rg'+(isEditing?'':' view-mode');
 
+  if(isEditing){
+    // Drag handle
+    const drag=document.createElement('div');
+    drag.className='drag-handle';
+    drag.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>`;
+    row.appendChild(drag);
+  }
+
+  // Toggle
   const tog=document.createElement('div');
   tog.className=`ptog${node.hasChildren?'':' leaf'}`;
   tog.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
+  row.appendChild(tog);
 
+  // Level
   const lv=mk('span',`lbadge ${lvCls}`,`L${node.level}`);
-  const code=mk('div','pcode',node.component);
-  code.title=node.component;
-  const desc=mk('div','pdesc',node.description||'—');
-  desc.title=node.description;
-  const qty=mk('div','pqty',node.qty||'—');
-  const uom=mk('div','puom',node.uom||'—');
+  row.appendChild(lv);
 
-  const copyBtn=document.createElement('button');
-  copyBtn.className='copy-btn';
-  copyBtn.title='Copy row';
-  copyBtn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-  copyBtn.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(`${node.component}\t${node.description}\t${node.qty}\t${node.uom}`);toast('Row copied');};
+  // Component (editable)
+  if(isEditing){
+    const codeInput=document.createElement('input');
+    codeInput.className='edit-field pcode';
+    codeInput.value=node.component||'';
+    codeInput.onchange=()=>{node.component=codeInput.value;updateNodeInAsm(asmIdx,node);};
+    row.appendChild(codeInput);
+  }else{
+    const code=mk('div','pcode',node.component);
+    code.title=node.component;
+    row.appendChild(code);
+  }
 
-  [tog,lv,code,desc,qty,uom,copyBtn].forEach(c=>row.appendChild(c));
+  // Description (editable)
+  if(isEditing){
+    const descInput=document.createElement('input');
+    descInput.className='edit-field pdesc';
+    descInput.value=node.description||'';
+    descInput.onchange=()=>{node.description=descInput.value;updateNodeInAsm(asmIdx,node);};
+    row.appendChild(descInput);
+  }else{
+    const desc=mk('div','pdesc',node.description||'—');
+    desc.title=node.description;
+    row.appendChild(desc);
+  }
+
+  // Qty (editable)
+  if(isEditing){
+    const qtyInput=document.createElement('input');
+    qtyInput.className='edit-field pqty qty';
+    qtyInput.value=node.qty||'';
+    qtyInput.type='number';
+    qtyInput.step='0.001';
+    qtyInput.onchange=()=>{node.qty=qtyInput.value;updateNodeInAsm(asmIdx,node);};
+    row.appendChild(qtyInput);
+  }else{
+    const qty=mk('div','pqty',node.qty||'—');
+    row.appendChild(qty);
+  }
+
+  // UoM (editable)
+  if(isEditing){
+    const uomInput=document.createElement('input');
+    uomInput.className='edit-field puom';
+    uomInput.value=node.uom||'';
+    uomInput.onchange=()=>{node.uom=uomInput.value;updateNodeInAsm(asmIdx,node);};
+    row.appendChild(uomInput);
+  }else{
+    const uom=mk('div','puom',node.uom||'—');
+    row.appendChild(uom);
+  }
+
+  // Actions / Copy
+  if(isEditing){
+    const actions=document.createElement('div');
+    actions.className='edit-actions';
+    const delBtn=document.createElement('button');
+    delBtn.className='edit-btn del';
+    delBtn.title='Delete row';
+    delBtn.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    delBtn.onclick=()=>deleteRow(asmIdx,node.id);
+    const dupBtn=document.createElement('button');
+    dupBtn.className='edit-btn add';
+    dupBtn.title='Duplicate row';
+    dupBtn.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    dupBtn.onclick=()=>duplicateRow(asmIdx,node.id);
+    actions.appendChild(delBtn);
+    actions.appendChild(dupBtn);
+    row.appendChild(actions);
+  }else{
+    const copyBtn=document.createElement('button');
+    copyBtn.className='copy-btn';
+    copyBtn.title='Copy row';
+    copyBtn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    copyBtn.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(`${node.component}\t${node.description}\t${node.qty}\t${node.uom}`);toast('Row copied');};
+    row.appendChild(copyBtn);
+  }
+
   wrap.appendChild(row);
 
   if(node.hasChildren){
     const cw=document.createElement('div');
     cw.className='child-wrap';
     cw.style.borderLeftColor=asmColor+'55';
-    node.children.forEach(child=>cw.appendChild(makePartWrap(child,asmColor)));
+    node.children.forEach(child=>cw.appendChild(makePartWrap(child,asmColor,asmIdx)));
     wrap.appendChild(cw);
     row.onclick=e=>{
-      if(e.target.closest('.copy-btn')) return;
+      if(e.target.closest('.copy-btn')||e.target.closest('input')||e.target.closest('.edit-btn')) return;
       const open=cw.classList.toggle('open');
       tog.classList.toggle('open',open);
     };
@@ -851,7 +971,135 @@ function makePartWrap(node,asmColor){
 
 function mk(tag,cls,text){const e=document.createElement(tag);e.className=cls;e.textContent=text;return e;}
 
-/* ─── STATS ─── */
+/* ════════ EDIT MODE FUNCTIONS ════════ */
+function toggleAsmEdit(idx){
+  if(editingAsmIdx === idx){
+    editingAsmIdx = null;
+    toast('Edit mode disabled');
+  }else{
+    editingAsmIdx = idx;
+    toast('Edit mode enabled for this assembly');
+  }
+  renderAll();
+}
+
+function updateNodeInAsm(asmIdx,node){
+  const asm=assemblies[asmIdx];
+  const row=asm.rows.find(r=>r.id===node.id);
+  if(row){
+    row.component=node.component;
+    row.description=node.description;
+    row.qty=node.qty;
+    row.uom=node.uom;
+  }
+}
+
+function reorderRows(asmIdx){
+  const asm=assemblies[asmIdx];
+  const block=document.querySelector(`[data-asm="${asmIdx}"]`);
+  const wraps=Array.from(block.querySelectorAll('.part-wrap[data-node-id]'));
+  const newOrder=wraps.map(w=>w.dataset.nodeId);
+  asm.rows.sort((a,b)=>{
+    const idxA=newOrder.indexOf(a.id);
+    const idxB=newOrder.indexOf(b.id);
+    return idxA-idxB;
+  });
+  asm.tree=buildTree(asm.rows);
+}
+
+function deleteRow(asmIdx,nodeId){
+  if(!confirm('Delete this row?')) return;
+  const asm=assemblies[asmIdx];
+  asm.rows=asm.rows.filter(r=>r.id!==nodeId);
+  asm.tree=buildTree(asm.rows);
+  renderAll();
+  toast('Row deleted');
+}
+
+function duplicateRow(asmIdx,nodeId){
+  const asm=assemblies[asmIdx];
+  const row=asm.rows.find(r=>r.id===nodeId);
+  if(!row) return;
+  const newRow={...row,id:uid(),component:row.component+'-COPY'};
+  const idx=asm.rows.findIndex(r=>r.id===nodeId);
+  asm.rows.splice(idx+1,0,newRow);
+  asm.tree=buildTree(asm.rows);
+  renderAll();
+  toast('Row duplicated');
+}
+
+function addNewRow(asmIdx){
+  const asm=assemblies[asmIdx];
+  const newRow={level:1,component:'NEW-PART',description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
+  asm.rows.push(newRow);
+  asm.tree=buildTree(asm.rows);
+  renderAll();
+  toast('New row added');
+}
+
+/* ════════ EXPORT FUNCTIONS ════════ */
+function toggleExportMenu(){
+  document.getElementById('export-dropdown').classList.toggle('show');
+}
+
+function exportCurrentCSV(){
+  if(!assemblies.length){toast('No data to export');return;}
+  const lines=[`Level,Component,Description,Qty,UoM,Supplier`];
+  assemblies.forEach(a=>{
+    a.rows.forEach(r=>{
+      lines.push(`${r.level},"${r.component||''}","${r.description||''}",${r.qty||''},${r.uom||''},"${r.supplier||''}"`);
+    });
+  });
+  downloadFile(lines.join('\n'),`BOM_${assemblies[0].material}_${new Date().toISOString().slice(0,10)}.csv`,'text/csv');
+  toggleExportMenu();
+  toast('CSV exported');
+}
+
+function exportCurrentExcel(){
+  if(!assemblies.length){toast('No data to export');return;}
+  const lines=[`Level\tComponent\tDescription\tQty\tUoM\tSupplier`];
+  assemblies.forEach(a=>{
+    a.rows.forEach(r=>{
+      lines.push(`${r.level}\t${r.component||''}\t${r.description||''}\t${r.qty||''}\t${r.uom||''}\t${r.supplier||''}`);
+    });
+  });
+  downloadFile(lines.join('\n'),`BOM_${assemblies[0].material}_${new Date().toISOString().slice(0,10)}.tsv`,'text/tab-separated-values');
+  toggleExportMenu();
+  toast('TSV exported');
+}
+
+function saveAsNewBOM(){
+  if(!assemblies.length){toast('No data to save');return;}
+  const name=prompt('Enter new BOM name:',assemblies[0].material+'-NEW');
+  if(!name) return;
+  assemblies.forEach(a=>{
+    a.material=name;
+    a.version=(a.version||'R1')+'-NEW';
+  });
+  saveCurrentBom();
+  toggleExportMenu();
+  renderNav();
+  renderAll();
+}
+
+function downloadFile(content,filename,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Close export menu when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.export-menu')){
+    document.getElementById('export-dropdown').classList.remove('show');
+  }
+});
+
+/* ════════ STATS ════════ */
 function updateStats(){
   let totalRows=0,maxD=0;
   assemblies.forEach(a=>{totalRows+=a.rows.length;a.rows.forEach(r=>{maxD=Math.max(maxD,r.level);});});
@@ -861,7 +1109,7 @@ function updateStats(){
   document.getElementById('sb-stats').style.display='grid';
 }
 
-/* ─── SEARCH ─── */
+/* ════════ SEARCH ════════ */
 function doSearch(q){
   const ql=q.toLowerCase().trim();
   document.querySelectorAll('.part-wrap').forEach(wrap=>{
@@ -886,7 +1134,7 @@ function doSearch(q){
   }
 }
 
-/* ─── EXPAND / COLLAPSE ─── */
+/* ════════ EXPAND / COLLAPSE ════════ */
 function expandAll(){
   document.querySelectorAll('.child-wrap').forEach(e=>e.classList.add('open'));
   document.querySelectorAll('.ptog:not(.leaf)').forEach(e=>e.classList.add('open'));
@@ -900,7 +1148,7 @@ function collapseAll(){
   document.querySelectorAll('.asm-chev').forEach(e=>e.style.transform='rotate(0deg)');
 }
 
-/* ─── HELPERS ─── */
+/* ════════ HELPERS ════════ */
 function uid(){return Math.random().toString(36).slice(2,9);}
 function toast(msg){
   const t=document.getElementById('toast');
@@ -933,10 +1181,11 @@ function clearAll(){
   document.getElementById('diff-rows').innerHTML='';
   document.getElementById('cmp-rows-a').innerHTML='';
   document.getElementById('cmp-rows-b').innerHTML='';
+  editingAsmIdx=null;
   switchTab('tree');
 }
 
-/* ─── SAMPLE (matches real format) ─── */
+/* ════════ SAMPLE DATA ════════ */
 const SAMPLE=`Plant\tLevel\tMaterial\tMaterial Description\tComponent\tComponent Description\tComp. Qty(CUn)\tComp. Qty(BUn)\tUOM\tMaterial Type
 5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tBO00100587\tSIKAMELT-700\t39\t39\tKG\tROH
 5600\t1\tS367015500\tLAMP ASM HL CONDOR RHD RH 24V\tS3670155F3\tHSG ASM-HL-CONDOR-RHD-RH-24V\t1\t1\tNO\tHALB
@@ -972,18 +1221,7 @@ const SAMPLE=`Plant\tLevel\tMaterial\tMaterial Description\tComponent\tComponent
 5600\t2\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015402\tLENS-OTR HL-CONDO-LH\t1\t1\tNO\tHALB
 5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tBO02801410\tUVHC3000 HARD COAT\t11\t11\tG\tROH
 5600\t3\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tS367015406\tLENS-OTR HL-CONDO-LH-1W\t1\t1\tNO\tHALB
-5600\t4\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tRM01220080\tMAKROLON AL2647 CLEAR\t474\t474\tKG\tROH
-5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO00100587\tSIKAMELT-700\t29\t29\tKG\tROH
-5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS3670109F3\tHSG ASSY-HL-VE3100-RHD-LH-24V\t1\t1\tNO\tHALB
-5600\t2\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS3670109F5\tREF ASM-HL-VE3100-HB-LH-24V\t1\t1\tNO\tHALB
-5600\t3\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010518\tREF-HIGH BEAM-VE3100-LH\t1\t1\tNO\tHALB
-5600\t4\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO02801404\tUNCLAD-AL WIRE 1.4MM DIA\t100\t0.100\tG\tROH
-5600\t4\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010522\tREF-HB-VE3100-RHD-LH-2W\t1\t1\tNO\tHALB
-5600\t5\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO02912902\tREFLECTOR-HB-VE3100-RHD-LH-1W\t1\t1\tNO\tROH
-5600\t2\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tS367010514\tHOUSING-HEADLAMP-VE3100-LH\t1\t1\tNO\tHALB
-5600\t3\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tRM01220062\tPPTD XPP 1804 BLACK\t756\t756\tKG\tROH
-5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO00800395\tBLB-BAYONET S8 W3 PY21W 24V\t1\t1\tNO\tROH
-5600\t1\tS367010900\tLAMP ASM HL VE3100 RHD LH 24V\tBO01610236\tVENT ASSEMBLY-TUBE ARIA\t5\t5\tNO\tROH`;
+5600\t4\tS367015400\tLAMP ASM HL CONDO RHD LH 24V\tRM01220080\tMAKROLON AL2647 CLEAR\t474\t474\tKG\tROH`;
 
 function loadSample(){document.getElementById('raw').value=SAMPLE;toast('Sample data loaded');}
 
@@ -997,9 +1235,7 @@ qa?.addEventListener('keydown',e=>{
 });
 document.getElementById('meta-date').value=new Date().toISOString().slice(0,10);
 
-/* ════════════════════════════════════════════
-   TAB SWITCHING
-════════════════════════════════════════════ */
+/* ════════ TAB SWITCHING ════════ */
 function switchTab(tab){
   const isTree = tab==='tree';
   document.getElementById('tab-tree').classList.toggle('active',isTree);
@@ -1007,16 +1243,11 @@ function switchTab(tab){
   document.getElementById('tree').style.display = isTree ? '' : 'none';
   const dp = document.getElementById('diff-panel');
   dp.classList.toggle('visible',!isTree);
-  // keep global search visible in both tabs
   document.querySelector('.ctrls').style.display = '';
 }
 
-/* ════════════════════════════════════════════
-   POPULATE DIFF SELECTS (called after go())
-════════════════════════════════════════════ */
-function getComparePool(){
-  return bomVersions.length ? bomVersions : assemblies;
-}
+/* ════════ DIFF FUNCTIONS ════════ */
+function getComparePool(){return bomVersions.length ? bomVersions : assemblies;}
 
 function populateDiffSelects(){
   const pool=getComparePool();
@@ -1034,26 +1265,6 @@ function populateDiffSelects(){
   });
 }
 
-/* ════════════════════════════════════════════
-   DIFF ALGORITHM  (correct: key by component+level)
-
-   SAP BOM reality:
-   • The same component code CAN appear at multiple different
-     levels (different sub-assembly contexts).
-   • Each (component, level) pair is a unique BOM position.
-   • Two assemblies match on a position when BOTH the component
-     code AND the level are the same.
-   • Only qty/uom differ → qty-diff row.
-   • Position in one but not the other → only-a / only-b.
-
-   Expected result for the reference LH vs RH data:
-     Shared   : 41  (BO* parts present at same level in both)
-     Qty diff : 4   (RM01220107/067/062/119 — raw material KGs differ)
-     Only LH  : 14  (S3670168*, S367016412/412/812/814/806/402/404/408/410,
-                      BO02912706/712, BO01610121)
-     Only RH  : 14  (mirror S3670169*, S367016512/512/912/816/906/502/504/508/510,
-                      BO02912705/711, BO01610120)
-════════════════════════════════════════════ */
 function parseQty(s){
   if(s==null) return 0;
   return parseFloat(String(s).replace(/,/g,'')) || 0;
@@ -1096,9 +1307,6 @@ function diffAssemblies(asmA, asmB){
   return rows;
 }
 
-/* ════════════════════════════════════════════
-   RUN DIFF & RENDER
-════════════════════════════════════════════ */
 let lastDiffResults=[];
 let activeFilters=new Set(['shared','only-a','only-b','qty-diff']);
 
@@ -1181,9 +1389,6 @@ function renderCompareSplit(){
   });
 }
 
-/* ════════════════════════════════════════════
-   FILTER CHIPS
-════════════════════════════════════════════ */
 function toggleChip(el,type){
   el.classList.toggle('on');
   if(el.classList.contains('on')) activeFilters.add(type);
@@ -1191,9 +1396,6 @@ function toggleChip(el,type){
   if(lastDiffResults.length){renderDiffRows();renderCompareSplit();}
 }
 
-/* ════════════════════════════════════════════
-   EXPORT DIFF AS CSV
-════════════════════════════════════════════ */
 function exportDiff(){
   if(!lastDiffResults.length) return;
   const idxA=document.getElementById('sel-a').value;
@@ -1229,8 +1431,6 @@ function exportDiff(){
   URL.revokeObjectURL(url);
   toast('CSV exported');
 }
-
-
 
 </script>
 </body>
