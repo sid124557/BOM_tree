@@ -22,6 +22,8 @@
   --d-a:#2a1520; --d-a-bd:rgba(239,68,68,.3); --d-a-fg:#ef4444;
   --d-b:#102a1e; --d-b-bd:rgba(34,197,94,.3); --d-b-fg:#22c55e;
   --d-qty:#2a2010; --d-qty-bd:rgba(245,158,11,.3); --d-qty-fg:#f59e0b;
+  --glass:rgba(255,255,255,.03); --glass-strong:rgba(255,255,255,.06);
+  --glass-edge:rgba(255,255,255,.12); --glass-blur:blur(10px);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -41,18 +43,44 @@
 .edit-select:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);}
 
 .edit-mode-toggle{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:4px;border-radius:7px;}
-.edit-mode-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:5px;background:transparent;border:none;color:var(--fg3);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
-.edit-mode-btn:hover{color:var(--fg2);}
-.edit-mode-btn.active{background:var(--accent);color:#000;}
+.edit-mode-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:5px;background:transparent;border:1px solid transparent;color:#8fa5c8;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.edit-mode-btn:hover{color:#c7d7ef;background:rgba(255,255,255,.05);}
+.edit-mode-btn.active{background:linear-gradient(180deg,#00ddb0,#00c896);color:#00150f;border-color:rgba(0,200,150,.5);box-shadow:0 6px 18px rgba(0,200,150,.28);}
 .edit-mode-btn svg{opacity:.7;}
 .edit-mode-btn.active svg{opacity:1;}
 
-.edit-actions-bar{display:flex;gap:6px;}
+.edit-actions-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.edit-helper{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,200,150,.06);border:1px solid var(--accent-bd);border-radius:8px;font-size:11px;color:var(--fg2);}
+.edit-helper strong{color:var(--accent);font-weight:700;}
+.edit-context-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.28);border-radius:8px;}
+.edit-context-k{font-size:10px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.08em;}
+.edit-context-v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.edit-parent-select{min-width:260px;background:rgba(0,0,0,.45);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 9px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.edit-parent-select:focus{outline:none;border-color:rgba(59,130,246,.35);box-shadow:0 0 0 2px rgba(59,130,246,.12);}
+.edit-indent-controls{display:flex;align-items:center;gap:4px;}
+.edit-indent-btn{width:24px;height:24px;border:1px solid var(--bd2);border-radius:4px;background:rgba(255,255,255,.04);color:var(--fg2);font-size:13px;font-weight:700;cursor:pointer;line-height:1;transition:all .15s;}
+.edit-indent-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
+.edit-indent-input{width:52px;text-align:center;}
+.edit-level-chip{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--fg3);background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:4px;padding:4px 6px;text-align:center;}
 .edit-action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--bd2);color:var(--fg2);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .edit-action-btn:hover{background:rgba(255,255,255,.09);color:var(--fg);transform:translateY(-1px);}
 .edit-action-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
 .edit-action-btn.primary:hover{background:#00dfb8;box-shadow:0 4px 14px rgba(0,200,150,.35);}
 
+.edit-workbench{display:grid;grid-template-columns:330px 1fr;gap:12px;min-height:420px;}
+.edit-tree-panel{background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:10px;overflow:auto;}
+.edit-tree-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:4px 2px;}
+.edit-tree-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);}
+.edit-tree-list{display:flex;flex-direction:column;gap:4px;}
+.edit-tree-node{display:flex;align-items:center;gap:6px;padding:6px 7px;border:1px solid transparent;border-radius:7px;background:rgba(255,255,255,.02);cursor:pointer;transition:all .15s;}
+.edit-tree-node:hover{background:rgba(255,255,255,.06);border-color:var(--bd2);}
+.edit-tree-node.selected{background:rgba(0,200,150,.1);border-color:var(--accent-bd);}
+.edit-tree-node.drag-over{border-color:#60a5fa;background:rgba(59,130,246,.15);}
+.edit-tree-indent{display:inline-block;width:12px;flex-shrink:0;}
+.edit-tree-code{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.edit-tree-meta{font-size:9px;color:var(--fg3);}
+.edit-tree-add{width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:rgba(255,255,255,.05);color:var(--fg2);display:grid;place-items:center;cursor:pointer;}
+.edit-tree-add:hover{color:#22c55e;border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.14);}
 .edit-table-container{flex:1;background:var(--card);border:1px solid var(--bd2);border-radius:10px;overflow:hidden;min-height:400px;display:flex;flex-direction:column;}
 .edit-table-header{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:2;}
 .edit-table-header span{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;}
@@ -60,6 +88,9 @@
 
 .edit-row{display:grid;grid-template-columns:24px 48px 60px 1fr 1.5fr 80px 60px 100px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center;transition:background .15s;}
 .edit-row:hover{background:var(--hover);}
+.edit-row.selected{background:rgba(0,200,150,.08);outline:1px solid var(--accent-bd);outline-offset:-1px;}
+.edit-row.selected .edit-level-badge{box-shadow:0 0 0 1px var(--accent-bd) inset;}
+
 .edit-row:last-child{border-bottom:none;}
 .edit-row.dragging{opacity:.4;}
 .edit-row.drag-over{border-top:2px solid var(--accent);margin-top:-2px;}
@@ -90,6 +121,7 @@
 .edit-icon-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
 .edit-icon-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25);}
 .edit-icon-btn.dup:hover{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25);}
+.edit-icon-btn.add:hover{background:rgba(59,130,246,.14);color:#60a5fa;border-color:rgba(59,130,246,.3);}
 
 .edit-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:12px;color:var(--fg3);text-align:center;}
 
@@ -127,7 +159,7 @@
 .mode-toggle.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent);}
 
 /* ── TAB BAR ── */
-.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--panel);}
+.tab-bar{display:flex;gap:0;flex-shrink:0;background:var(--panel);}
 .tab-btn{display:flex;align-items:center;gap:6px;padding:11px 18px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--fg3);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.01em;}
 .tab-btn:hover{color:var(--fg2);}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
@@ -163,7 +195,7 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .diff-table-wrap{background:var(--card);border:1px solid var(--bd2);border-radius:9px;overflow:hidden;}
 .compare-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
 .compare-pane{border:1px solid var(--bd2);border-radius:9px;background:var(--card);overflow:hidden;}
-.compare-pane-head{padding:8px 11px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
+.compare-pane-head{padding:8px 11px;background:rgba(0,0,0,.35);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
 .cmp-row{display:grid;grid-template-columns:62px 1fr 64px 64px 1fr;gap:6px;padding:7px 10px;border-bottom:1px solid var(--bd);font-size:10px;align-items:center;}
 .cmp-row:last-child{border-bottom:none;}
 .cmp-status{font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;padding:2px 4px;border-radius:3px;text-transform:uppercase;text-align:center;}
@@ -174,16 +206,16 @@ select.diff-select:focus{outline:none;border-color:var(--accent-bd);}
 .cmp-del{background:rgba(239,68,68,.12);} .cmp-del .cmp-status{background:rgba(239,68,68,.16);color:#ef4444;}
 .cmp-mod{background:rgba(245,158,11,.12);} .cmp-mod .cmp-status{background:rgba(245,158,11,.16);color:#f59e0b;}
 .cmp-same{background:rgba(138,154,184,.08);} .cmp-same .cmp-status{background:rgba(138,154,184,.14);color:#8a9ab8;}
-.diff-table-head{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bd);}
+.diff-table-head{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;background:rgba(0,0,0,.4);}
 .diff-table-head > div{padding:8px 14px;font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 .diff-table-head > div:not(:last-child){border-right:1px solid var(--bd);}
 .diff-row{display:grid;grid-template-columns:56px 1fr 1fr;gap:0;border-bottom:1px solid var(--bd);transition:filter .1s;}
 .diff-row:last-child{border-bottom:none;}
 .diff-row:hover{filter:brightness(1.15);}
-.diff-row.shared{background:var(--d-shared);}
-.diff-row.only-a{background:var(--d-a);}
-.diff-row.only-b{background:var(--d-b);}
-.diff-row.qty-diff{background:var(--d-qty);}
+.diff-row.shared{background:linear-gradient(90deg,rgba(148,163,184,.22),rgba(30,42,58,.9));}
+.diff-row.only-a{background:linear-gradient(90deg,rgba(239,68,68,.28),rgba(42,21,32,.9));}
+.diff-row.only-b{background:linear-gradient(90deg,rgba(34,197,94,.25),rgba(16,42,30,.92));}
+.diff-row.qty-diff{background:linear-gradient(90deg,rgba(245,158,11,.24),rgba(42,32,16,.92));}
 .diff-tag{display:flex;align-items:center;justify-content:center;padding:8px 6px;border-right:1px solid var(--bd);}
 .diff-tag span{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em;}
 .diff-row.shared .diff-tag span{background:rgba(138,154,184,.12);color:var(--d-shared-fg);}
@@ -221,26 +253,26 @@ body{font-family:'Syne',sans-serif;background:radial-gradient(circle at top left
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;z-index:0;}
 body::after{content:'';position:fixed;inset:0;background:radial-gradient(550px 320px at 10% -5%,rgba(59,130,246,.14),transparent 70%),radial-gradient(460px 280px at 90% -15%,rgba(0,200,150,.1),transparent 70%);pointer-events:none;z-index:0;}
 
-.sidebar{position:relative;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0)),var(--panel);border-right:1px solid var(--bd2);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(6px);}
-.sb-head{padding:20px 20px 14px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.sidebar{position:relative;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),var(--panel);border-right:1px solid var(--glass-edge);display:flex;flex-direction:column;overflow:auto;backdrop-filter:var(--glass-blur);padding:12px 10px 10px;gap:10px;box-shadow:inset -1px 0 0 rgba(255,255,255,.05), 16px 0 32px rgba(0,0,0,.25);}
+.sb-head{padding:14px 14px 12px;border:1px solid var(--glass-edge);border-radius:12px;flex-shrink:0;background:var(--glass);backdrop-filter:var(--glass-blur);}
 .logo{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
 .logo-box{width:28px;height:28px;background:var(--accent);border-radius:5px;display:grid;place-items:center;flex-shrink:0;}
 .logo-box svg{color:#000;}
 h1{font-size:17px;font-weight:800;letter-spacing:-.02em;}
 h1 span{color:var(--accent);}
-.sb-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--fg3);letter-spacing:.06em;text-transform:uppercase;}
+.sb-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#a5b8d6;letter-spacing:.06em;text-transform:uppercase;}
 
-.sb-input{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;background:rgba(255,255,255,.01);}
+.sb-input{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;backdrop-filter:var(--glass-blur);margin:0 2px;padding:14px 16px;flex-shrink:0;background:rgba(255,255,255,.01);}
 .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
-.meta-grid input{background:rgba(0,0,0,.35);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.meta-grid input{background:rgba(0,0,0,.35);border:1px solid var(--glass-edge);border-radius:8px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;transition:all .2s;}
 .meta-grid input:focus{outline:none;border-color:var(--accent-bd);}
-.inp-label{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.inp-label{font-size:9px;font-weight:700;color:#bad0ef;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
 .mono-tag{font-family:'IBM Plex Mono',monospace;font-size:8px;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:3px;}
 textarea{width:100%;min-height:110px;background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:7px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;padding:9px 11px;resize:vertical;transition:border-color .2s,box-shadow .2s;}
 textarea:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);}
 textarea::placeholder{color:var(--fg3);}
 .btn-row{display:flex;gap:6px;margin-top:9px;}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;transition:all .15s;border:none;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;transition:all .22s ease;border:none;white-space:nowrap;}
 .btn-p{background:var(--accent);color:#000;flex:1;}
 .btn-p:hover{background:#00dfb8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,200,150,.35);}
 .btn-g{background:rgba(255,255,255,.05);color:var(--fg2);border:1px solid var(--bd2);}
@@ -249,17 +281,17 @@ textarea::placeholder{color:var(--fg3);}
 .quick-add textarea{min-height:70px;max-height:110px;}
 .quick-add small{font-size:9px;color:var(--fg3);line-height:1.4;}
 
-.bom-library{padding:10px 14px;border-bottom:1px solid var(--bd);max-height:170px;overflow:auto;}
+.bom-library{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;backdrop-filter:var(--glass-blur);margin:0 2px;padding:10px 14px;max-height:170px;overflow:auto;}
 .bom-lib-item{display:flex;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--bd);border-radius:7px;margin-bottom:6px;background:rgba(255,255,255,.02);}
 .bom-lib-item button{border:none;background:rgba(255,255,255,.06);color:var(--fg2);font-size:10px;border-radius:4px;padding:4px 7px;cursor:pointer;}
 .bom-lib-item button:hover{background:rgba(255,255,255,.12);color:var(--fg);}
 
-.bulk-edit{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;}
-.bulk-edit select,.bulk-edit input{background:rgba(0,0,0,.35);border:1px solid var(--bd2);border-radius:6px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.bulk-edit{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;backdrop-filter:var(--glass-blur);margin:0 2px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+.bulk-edit select,.bulk-edit input{background:rgba(0,0,0,.35);border:1px solid var(--glass-edge);border-radius:8px;color:var(--fg);padding:7px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
 .bulk-edit .btn-row{margin-top:2px;}
 
-.sb-nav{flex:1;overflow-y:auto;padding:10px 12px;}
-.nav-title{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;}
+.sb-nav{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;backdrop-filter:var(--glass-blur);margin:0 2px;flex:1;overflow-y:auto;padding:10px 12px;}
+.nav-title{font-size:9px;font-weight:700;color:#c4d6f2;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;}
 .nav-empty{text-align:center;padding:24px 10px;color:var(--fg3);font-size:11px;}
 .nav-item{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:7px;cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent;}
 .nav-item:hover{background:var(--hover);}
@@ -276,7 +308,7 @@ textarea::placeholder{color:var(--fg3);}
 .stat-k{font-size:8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
 
 .main{position:relative;z-index:1;display:flex;flex-direction:column;overflow:hidden;}
-.main-hdr{padding:18px 26px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0;backdrop-filter:blur(8px);background:linear-gradient(180deg,rgba(17,24,34,.9),rgba(17,24,34,.68));}
+.main-hdr{padding:18px 26px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0;backdrop-filter:blur(8px);background:linear-gradient(180deg,rgba(17,24,34,.9),rgba(17,24,34,.68));}
 .main-title-wrap{flex:1;min-width:0;}
 .main-eyebrow{font-size:9px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
 .main-asm-name{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -284,15 +316,15 @@ textarea::placeholder{color:var(--fg3);}
 .ctrls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .sw{position:relative;}
 .sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--fg3);pointer-events:none;}
-.search{background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:999px;padding:7px 12px 7px 28px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;width:190px;transition:all .2s;}
-.search:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);width:230px;}
+.search{background:rgba(0,0,0,.4);border:1px solid var(--bd2);border-radius:999px;padding:7px 12px 7px 28px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;width:220px;transition:border-color .2s,box-shadow .2s;}
+.search:focus{outline:none;border-color:var(--accent-bd);box-shadow:0 0 0 3px var(--accent-bg);}
 .ic-btn{width:30px;height:30px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--bd2);border-radius:8px;color:var(--fg3);cursor:pointer;transition:all .15s;}
 .ic-btn:hover{color:var(--fg);background:rgba(255,255,255,.08);}
 
 .tree-area{flex:1;overflow-y:auto;padding:18px 26px;}
 
 .asm-block{margin-bottom:18px;border:1px solid var(--bd2);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.015),rgba(255,255,255,0)),var(--card);box-shadow:var(--glow);}
-.asm-bar{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .15s;user-select:none;}
+.asm-bar{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;transition:background .15s;user-select:none;}
 .asm-bar:hover{background:var(--hover);}
 .asm-accent{width:3px;height:32px;border-radius:2px;flex-shrink:0;}
 .asm-bar-info{flex:1;min-width:0;}
@@ -302,7 +334,7 @@ textarea::placeholder{color:var(--fg3);}
 .asm-cnt{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;}
 .asm-chev{transition:transform .25s;color:var(--fg3);}
 
-.col-hdr{display:grid;gap:6px;padding:6px 15px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--bd);}
+.col-hdr{display:grid;gap:6px;padding:6px 15px;background:rgba(0,0,0,.35);}
 .col-hdr span{font-size:8px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace;}
 
 /* 8-col grid for edit mode: drag | toggle | level | component | description | qty | uom | actions */
@@ -360,6 +392,8 @@ textarea::placeholder{color:var(--fg3);}
   body{grid-template-columns:290px 1fr;}
   .diff-summary{grid-template-columns:repeat(2,minmax(0,1fr));}
   .compare-split{grid-template-columns:1fr;}
+  .edit-workbench{grid-template-columns:1fr;}
+  .edit-tree-panel{max-height:230px;}
 }
 
 @media(max-width:860px){
@@ -538,9 +572,21 @@ textarea::placeholder{color:var(--fg3);}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Part
         </button>
+        <button class="edit-action-btn" onclick="addChildPartFromSelection()" title="Add part under selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6a2 2 0 0 0 2 2h14"/><path d="M14 10h6"/><path d="M17 7v6"/></svg>
+          Add Child
+        </button>
+        <button class="edit-action-btn" onclick="addSiblingPartFromSelection()" title="Add part below selected row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h10"/><path d="M17 8v8"/><path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/></svg>
+          Add Below
+        </button>
         <button class="edit-action-btn" onclick="undoLastChange()" title="Undo last change">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           Undo
+        </button>
+        <button class="edit-action-btn" onclick="cloneEditedAssembly()" title="Create a new BOM from this edited assembly">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          New BOM from Edit
         </button>
         <button class="edit-action-btn primary" onclick="saveEditChanges()" title="Save changes">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -549,17 +595,36 @@ textarea::placeholder{color:var(--fg3);}
       </div>
     </div>
 
-    <!-- Edit Table View -->
-    <div class="edit-table-container" id="edit-table-container">
-      <div class="edit-empty">
-        <div class="empty-ring">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
+    <div class="edit-helper">
+      <strong>Tip:</strong> Click a row first, then use <em>Add Child</em>/<em>Add Below</em> for targeted insertion in sub-assemblies. Use <em>Indent</em> controls for quick hierarchy fixes, then <em>New BOM from Edit</em> to clone.
+    </div>
+
+    <div class="edit-context-bar" id="edit-context-bar" style="display:none">
+      <span class="edit-context-k">Selected Row</span>
+      <span class="edit-context-v" id="edit-selected-row-label">—</span>
+      <span class="edit-context-k">Parent Sub-Assembly</span>
+      <select class="edit-parent-select" id="edit-parent-select" onchange="applySelectedRowParent()"></select>
+    </div>
+
+    <!-- Edit Tree + Table Workbench -->
+    <div class="edit-workbench">
+      <div class="edit-tree-panel" id="edit-tree-panel">
+        <div class="edit-empty">
+          <div class="empty-title">No Assembly Selected</div>
+          <div class="empty-desc">Select an assembly to edit sub-assemblies in tree mode.</div>
         </div>
-        <div class="empty-title">No Assembly Selected</div>
-        <div class="empty-desc">Select an assembly from the dropdown above to begin editing</div>
+      </div>
+      <div class="edit-table-container" id="edit-table-container">
+        <div class="edit-empty">
+          <div class="empty-ring">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </div>
+          <div class="empty-title">No Assembly Selected</div>
+          <div class="empty-desc">Select an assembly from the dropdown above to begin editing</div>
+        </div>
       </div>
     </div>
   </div>
@@ -655,30 +720,46 @@ let assemblies=[];
 let bomVersions=[];
 let compareRows=[];
 let draggedElement=null;
-let editingAsmIdx=null; // Track which assembly is being edited (tree view)
 let editPanelAsmIdx=null; // Track assembly being edited in edit panel
 let editViewMode='edit'; // 'edit' or 'view'
 let editHistory=[]; // For undo functionality
 let editDraggedRow=null;
+let editSelectedRowIdx=null;
+let editTreeDraggedIdx=null;
+let lastDiffResults=[];
+let historyTimer=null;
 
 /* ════════ PARSE ════════ */
 function parseData(raw){
   const lines=raw.trim().split('\n');
   let start=0;
-  const h=lines[0].split('\t');
-  if(h[1]==='Level'||h[2]==='Material'||isNaN(parseInt(h[1]))){start=1;}
+  const h=lines[0].split('\t').map(x=>(x||'').trim().toLowerCase());
+  const hasHeader = h.includes('level') || h.includes('material') || h.includes('component');
+  if(hasHeader){start=1;}
+
+  const idx={
+    level: hasHeader ? h.findIndex(v=>v==='level') : 1,
+    material: hasHeader ? h.findIndex(v=>v==='material') : 2,
+    matDesc: hasHeader ? h.findIndex(v=>v.includes('material description')) : 3,
+    component: hasHeader ? h.findIndex(v=>v==='component') : 4,
+    compDesc: hasHeader ? h.findIndex(v=>v.includes('component description')) : 5,
+    qty: hasHeader ? h.findIndex(v=>v.includes('qty') && (v.includes('cun')||v==='qty'||v.includes('comp. qty(cun)'))) : 6,
+    uom: hasHeader ? h.findIndex(v=>v==='uom' || v.includes('unit')) : 8
+  };
+
+  const pick=(arr,ind,fallback)=> (ind!=null && ind>=0 && ind<arr.length ? arr[ind] : (arr[fallback]||''));
   const asmMap=new Map();
   let colorIdx=0;
   for(let i=start;i<lines.length;i++){
     const c=lines[i].split('\t');
     if(c.length<6) continue;
-    const level=parseInt((c[1]||'').trim());
-    const material=(c[2]||'').trim();
-    const matDesc=(c[3]||'').trim();
-    const component=(c[4]||'').trim();
-    const compDesc=(c[5]||'').trim();
-    const qty=(c[6]||'').trim().replace(/,/g,'');
-    const uom=(c[8]||'').trim();
+    const level=parseInt((pick(c,idx.level,1)||'').trim(),10);
+    const material=(pick(c,idx.material,2)||'').trim();
+    const matDesc=(pick(c,idx.matDesc,3)||'').trim();
+    const component=(pick(c,idx.component,4)||'').trim();
+    const compDesc=(pick(c,idx.compDesc,5)||'').trim();
+    const qty=(pick(c,idx.qty,6)||'').trim().replace(/,/g,'');
+    const uom=(pick(c,idx.uom,8)||'').trim();
     if(isNaN(level)||!material||!component) continue;
     if(!asmMap.has(material)){
       asmMap.set(material,{material,description:matDesc,color:COLORS[colorIdx%COLORS.length],rows:[]});
@@ -690,7 +771,6 @@ function parseData(raw){
   }
   return [...asmMap.values()];
 }
-
 function buildTree(rows){
   const nodes=rows.map(r=>({...r,children:[],hasChildren:false}));
   const roots=[];
@@ -745,7 +825,9 @@ function quickAddRows(){
   if(!asm.rows.length){toast('No valid rows in Quick-Add');return;}
   asm.tree=buildTree(asm.rows);
   assemblies.push(asm);
-  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
+  editPanelAsmIdx=null;
+  editHistory=[];
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();populateEditSelect();
   toast(`Quick-added ${asm.rows.length} rows`);
 }
 
@@ -785,7 +867,9 @@ function loadSavedBom(idx){
   document.getElementById('meta-project').value=assemblies[0].project||'';
   document.getElementById('meta-version').value=assemblies[0].version||'';
   document.getElementById('meta-date').value=assemblies[0].date||'';
-  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
+  editPanelAsmIdx=null;
+  editHistory=[];
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();populateEditSelect();
 }
 
 function duplicateBom(idx){
@@ -818,6 +902,7 @@ function applyBulkEdit(){
   });
   asm.tree=buildTree(asm.rows);
   renderAll();
+  if(editPanelAsmIdx===parseInt(idx,10)) renderEditTable();
   toast(`Bulk edit applied (${changed} updates)`);
 }
 
@@ -874,7 +959,7 @@ function setHeader(name,code,color){
 /* ════════ ASSEMBLY BLOCK ════════ */
 function makeAsmBlock(asm,idx){
   const total=countNodes(asm.tree);
-  const isEditing = editingAsmIdx === idx;
+  const isEditing = false;
   const block=document.createElement('div');
   block.className='asm-block'+(isEditing?' edit-mode-active':'');
   block.dataset.asm=idx;
@@ -899,94 +984,10 @@ function makeAsmBlock(asm,idx){
 
   const colHdr=document.createElement('div');
   colHdr.className='col-hdr rg'+(isEditing?'':' view-mode');
-  if(isEditing){
-    colHdr.innerHTML=`<span></span><span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span style="text-align:center">Actions</span>`;
-  }else{
-    colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
-  }
-
-  const body=document.createElement('div');
-  body.className='parts-body open'+(isEditing?' edit-mode':'');
-  body.appendChild(colHdr);
-
-  const partsDiv=document.createElement('div');
-  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color,idx)));
-  body.appendChild(partsDiv);
-
-  if(isEditing){
-    const addZone=document.createElement('div');
-    addZone.className='add-row-zone';
-    addZone.innerHTML=`<button class="add-row-btn" onclick="addNewRow(${idx})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Part</button>`;
-    body.appendChild(addZone);
-  }
-
-  bar.onclick=(e)=>{
-    if(e.target.closest('.mode-toggle')) return; // Don't toggle when clicking edit button
-    const open=body.classList.toggle('open');
-    bar.querySelector('.asm-chev').style.transform=open?'rotate(90deg)':'rotate(0)';
-  };
-
-  block.appendChild(bar);
-  block.appendChild(body);
-  return block;
-}
-
-/* ════════ PART ROW (EDITABLE) ════════ */
-function makePartWrap(node,asmColor,asmIdx){
-  const isEditing = editingAsmIdx === asmIdx;
-  const wrap=document.createElement('div');
-  wrap.className='part-wrap';
-  wrap.dataset.comp=(node.component||'').toLowerCase();
-  wrap.dataset.desc=(node.description||'').toLowerCase();
-  wrap.dataset.nodeId=node.id;
-  wrap.dataset.asmIdx=asmIdx;
-  wrap.draggable=isEditing;
-
-  if(isEditing){
-    wrap.ondragstart=e=>{
-      draggedElement=wrap;
-      wrap.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-    };
-    wrap.ondragend=e=>{
-      wrap.classList.remove('dragging');
-      document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>{
-        el.classList.remove('drag-over-top','drag-over-bottom');
-      });
-    };
-    wrap.ondragover=e=>{
-      e.preventDefault();
-      if(!draggedElement||draggedElement===wrap) return;
-      const rect=wrap.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      wrap.classList.remove('drag-over-top','drag-over-bottom');
-      if(e.clientY<mid){wrap.classList.add('drag-over-top');}
-      else{wrap.classList.add('drag-over-bottom');}
-    };
-    wrap.ondrop=e=>{
-      e.preventDefault();
-      if(!draggedElement||draggedElement===wrap) return;
-      const rect=wrap.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      const before=e.clientY<mid;
-      if(before){wrap.parentNode.insertBefore(draggedElement,wrap);}
-      else{wrap.parentNode.insertBefore(draggedElement,wrap.nextSibling);}
-      reorderRows(asmIdx);
-      toast('Row reordered');
-    };
-  }
 
   const lvCls=`l${Math.min(node.level,6)}`;
   const row=document.createElement('div');
   row.className='part-row rg'+(isEditing?'':' view-mode');
-
-  if(isEditing){
-    // Drag handle
-    const drag=document.createElement('div');
-    drag.className='drag-handle';
-    drag.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>`;
-    row.appendChild(drag);
-  }
 
   // Toggle
   const tog=document.createElement('div');
@@ -998,20 +999,12 @@ function makePartWrap(node,asmColor,asmIdx){
   const lv=mk('span',`lbadge ${lvCls}`,`L${node.level}`);
   row.appendChild(lv);
 
-  // Component (editable)
-  if(isEditing){
-    const codeInput=document.createElement('input');
-    codeInput.className='edit-field pcode';
-    codeInput.value=node.component||'';
-    codeInput.onchange=()=>{node.component=codeInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(codeInput);
-  }else{
-    const code=mk('div','pcode',node.component);
-    code.title=node.component;
-    row.appendChild(code);
-  }
+  // Component
+  const code=mk('div','pcode',node.component||'—');
+  code.title=node.component;
+  row.appendChild(code);
 
-  // Description (editable)
+  // Description
   if(isEditing){
     const descInput=document.createElement('input');
     descInput.className='edit-field pdesc';
@@ -1024,21 +1017,11 @@ function makePartWrap(node,asmColor,asmIdx){
     row.appendChild(desc);
   }
 
-  // Qty (editable)
-  if(isEditing){
-    const qtyInput=document.createElement('input');
-    qtyInput.className='edit-field pqty qty';
-    qtyInput.value=node.qty||'';
-    qtyInput.type='number';
-    qtyInput.step='0.001';
-    qtyInput.onchange=()=>{node.qty=qtyInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(qtyInput);
-  }else{
-    const qty=mk('div','pqty',node.qty||'—');
-    row.appendChild(qty);
-  }
+  // Qty
+  const qty=mk('div','pqty',node.qty||'—');
+  row.appendChild(qty);
 
-  // UoM (editable)
+  // UoM
   if(isEditing){
     const uomInput=document.createElement('input');
     uomInput.className='edit-field puom';
@@ -1097,17 +1080,29 @@ function mk(tag,cls,text){const e=document.createElement(tag);e.className=cls;e.
 
 /* ════════ EDIT MODE FUNCTIONS ════════ */
 function toggleAsmEdit(idx){
-  if(editingAsmIdx === idx){
-    editingAsmIdx = null;
-    toast('Edit mode disabled');
-  }else{
-    editingAsmIdx = idx;
-    toast('Edit mode enabled for this assembly');
-  }
-  renderAll();
+  clearTimeout(historyTimer);
+  if(!assemblies[idx]) return;
+  editPanelAsmIdx=idx;
+  editSelectedRowIdx=null;
+  editHistory=[];
+  populateEditSelect();
+  const sel=document.getElementById('edit-asm-select');
+  if(sel) sel.value=String(idx);
+  switchTab('edit');
+  renderEditTable();
+  toast('Opened Edit Workbench for selected assembly');
+}
+
+function saveEditHistoryForAsm(asmIdx){
+  if(asmIdx==null || !assemblies[asmIdx]) return;
+  if(editPanelAsmIdx!==asmIdx) editPanelAsmIdx=asmIdx;
+  const snapshot=JSON.parse(JSON.stringify(assemblies[asmIdx].rows));
+  editHistory.push(snapshot);
+  if(editHistory.length>50) editHistory.shift();
 }
 
 function updateNodeInAsm(asmIdx,node){
+  saveEditHistoryForAsm(asmIdx);
   const asm=assemblies[asmIdx];
   const row=asm.rows.find(r=>r.id===node.id);
   if(row){
@@ -1133,6 +1128,7 @@ function reorderRows(asmIdx){
 
 function deleteRow(asmIdx,nodeId){
   if(!confirm('Delete this row?')) return;
+  saveEditHistoryForAsm(asmIdx);
   const asm=assemblies[asmIdx];
   asm.rows=asm.rows.filter(r=>r.id!==nodeId);
   asm.tree=buildTree(asm.rows);
@@ -1141,6 +1137,7 @@ function deleteRow(asmIdx,nodeId){
 }
 
 function duplicateRow(asmIdx,nodeId){
+  saveEditHistoryForAsm(asmIdx);
   const asm=assemblies[asmIdx];
   const row=asm.rows.find(r=>r.id===nodeId);
   if(!row) return;
@@ -1153,6 +1150,7 @@ function duplicateRow(asmIdx,nodeId){
 }
 
 function addNewRow(asmIdx){
+  saveEditHistoryForAsm(asmIdx);
   const asm=assemblies[asmIdx];
   const newRow={level:1,component:'NEW-PART',description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
   asm.rows.push(newRow);
@@ -1194,16 +1192,201 @@ function exportCurrentExcel(){
 
 function saveAsNewBOM(){
   if(!assemblies.length){toast('No data to save');return;}
-  const name=prompt('Enter new BOM name:',assemblies[0].material+'-NEW');
-  if(!name) return;
-  assemblies.forEach(a=>{
-    a.material=name;
-    a.version=(a.version||'R1')+'-NEW';
-  });
-  saveCurrentBom();
-  toggleExportMenu();
+  const sourceIdx=editPanelAsmIdx!==null ? editPanelAsmIdx : 0;
+  createClonedBomFromAssembly(sourceIdx,{fromExportMenu:true});
+}
+
+function cloneEditedAssembly(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  createClonedBomFromAssembly(editPanelAsmIdx,{fromExportMenu:false});
+}
+
+function createClonedBomFromAssembly(sourceIdx,{fromExportMenu=false}={}){
+  const src=assemblies[sourceIdx];
+  if(!src){toast('Source assembly not found');return;}
+
+  const newMaterial=prompt('New BOM code / material:',`${src.material}-NEW`);
+  if(!newMaterial) return;
+  const newVersion=prompt('New BOM version:',`${src.version||'R1'}-NEW`);
+  if(newVersion===null) return;
+  const newProject=prompt('Project name for new BOM:',src.project||src.description||'Derived BOM');
+  if(newProject===null) return;
+
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.material=newMaterial.trim()||`${src.material}-NEW`;
+  copy.version=(newVersion||`${src.version||'R1'}-NEW`).trim();
+  copy.project=(newProject||src.project||src.description||'Derived BOM').trim();
+  copy.description=copy.project;
+  copy.date=new Date().toISOString().slice(0,10);
+  copy.rows=(copy.rows||[]).map(r=>({...r,id:uid()}));
+  copy.tree=buildTree(copy.rows);
+
+  const id=`${copy.project||'P'}|${copy.version||'R'}|${copy.material}`;
+  const existing=bomVersions.findIndex(v=>v.id===id);
+  const snap={...JSON.parse(JSON.stringify(copy)),id,savedAt:new Date().toISOString()};
+  if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
+
+  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length]});
+  renderBomLibrary();
+  editPanelAsmIdx=null;
+  editHistory=[];
   renderNav();
   renderAll();
+  updateStats();
+  populateDiffSelects();
+  populateBulkTargets();
+  populateEditSelect();
+  if(fromExportMenu) toggleExportMenu();
+  toast(`New BOM created from ${src.material}`);
+}
+
+function getSubtreeRange(rows,startIdx){
+  const base=(rows[startIdx]?.level)||1;
+  let end=startIdx+1;
+  while(end<rows.length && (rows[end].level||1)>base) end++;
+  return [startIdx,end];
+}
+
+function shiftSubtreeLevels(rows,startIdx,newRootLevel){
+  if(!rows[startIdx]) return;
+  const [s,e]=getSubtreeRange(rows,startIdx);
+  const rootLevel=rows[s].level||1;
+  const delta=newRootLevel-rootLevel;
+  if(delta===0) return;
+  for(let i=s;i<e;i++){
+    rows[i].level=Math.max(1,Math.min(6,(rows[i].level||1)+delta));
+  }
+}
+
+function getParentLevelBefore(rows,idx){
+  const current=rows[idx]?.level||1;
+  for(let i=idx-1;i>=0;i--){
+    if((rows[i].level||1)<current) return rows[i].level||1;
+  }
+  return 0;
+}
+
+function changeRowLevel(idx,delta){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const next=Math.max(1,Math.min(6,(parseInt(asm.rows[idx].level,10)||1)+delta));
+  const parentLevel=getParentLevelBefore(asm.rows,idx);
+  if(next<=parentLevel){toast('Invalid indent: row must remain below its parent');return;}
+  if(next===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  shiftSubtreeLevels(asm.rows,idx,next);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+}
+
+function setRowIndent(idx,indentValue){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const indent=Math.max(0,Math.min(5,parseInt(indentValue,10)||0));
+  const nextLevel=indent+1;
+  const parentLevel=getParentLevelBefore(asm.rows,idx);
+  if(nextLevel<=parentLevel){toast('Invalid indent: row must remain below its parent');return;}
+  if(nextLevel===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  shiftSubtreeLevels(asm.rows,idx,nextLevel);
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+}
+
+function renderEditContextBar(){
+  const bar=document.getElementById('edit-context-bar');
+  const label=document.getElementById('edit-selected-row-label');
+  const sel=document.getElementById('edit-parent-select');
+  if(!bar||!label||!sel){return;}
+  if(editPanelAsmIdx===null || editSelectedRowIdx===null){
+    bar.style.display='none';
+    return;
+  }
+  const asm=assemblies[editPanelAsmIdx];
+  const row=asm?.rows?.[editSelectedRowIdx];
+  if(!row){bar.style.display='none';return;}
+  bar.style.display='flex';
+  label.textContent=`${row.component||'—'} (L${row.level||1})`;
+
+  const targetLevel=(row.level||1)-1;
+  sel.innerHTML='';
+  if(targetLevel<1){
+    const o=document.createElement('option');
+    o.value='';
+    o.textContent='Top-level part (no parent required)';
+    sel.appendChild(o);
+    sel.disabled=true;
+    return;
+  }
+
+  sel.disabled=false;
+  const currentParent=findCurrentParentIndex(asm.rows,editSelectedRowIdx);
+  const [ss,se]=getSubtreeRange(asm.rows,editSelectedRowIdx);
+  const opts=[];
+  asm.rows.forEach((r,i)=>{
+    if(i>=ss && i<se) return;
+    if(i>=editSelectedRowIdx) return;
+    if((r.level||1)===targetLevel) opts.push({i,r});
+  });
+  if(!opts.length){
+    const o=document.createElement('option');
+    o.value='';
+    o.textContent=`No L${targetLevel} parent found before/around this row`; 
+    sel.appendChild(o);
+    sel.disabled=true;
+    return;
+  }
+  opts.forEach(({i,r})=>{
+    const o=document.createElement('option');
+    o.value=String(i);
+    o.textContent=`${r.component||'—'} (row ${i+1}, L${r.level})`;
+    if(currentParent===i) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function findCurrentParentIndex(rows,idx){
+  const level=(rows[idx]?.level)||1;
+  for(let i=idx-1;i>=0;i--){
+    if((rows[i].level||1)===level-1) return i;
+  }
+  return null;
+}
+
+function moveSelectedSubtreeToParent(parentIdx){
+  if(editPanelAsmIdx===null || editSelectedRowIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  const rows=asm.rows;
+  const idx=editSelectedRowIdx;
+  if(!rows[idx] || !rows[parentIdx]) return;
+  if(parentIdx>=idx){toast('Parent must be above selected row');return;}
+
+  const [ss,se]=getSubtreeRange(rows,idx);
+  if(parentIdx>=ss && parentIdx<se){toast('Cannot set parent inside its own subtree');return;}
+
+  const extracted=rows.splice(ss,se-ss);
+  let targetParentIdx=parentIdx;
+  if(parentIdx>ss) targetParentIdx-=extracted.length;
+  const targetInsert=subtreeEndIndex(rows,targetParentIdx);
+
+  const targetLevel=(rows[targetParentIdx].level||1)+1;
+  const delta=targetLevel-(extracted[0].level||1);
+  extracted.forEach(r=>{r.level=Math.max(1,Math.min(6,(r.level||1)+delta));});
+  rows.splice(targetInsert,0,...extracted);
+  editSelectedRowIdx=targetInsert;
+  asm.tree=buildTree(rows);
+  renderEditTable();
+  toast(`Moved under ${rows[targetParentIdx].component||'selected parent'}`);
+}
+
+function applySelectedRowParent(){
+  const sel=document.getElementById('edit-parent-select');
+  if(!sel || sel.disabled || sel.value==='') return;
+  const parentIdx=parseInt(sel.value,10);
+  if(Number.isNaN(parentIdx)) return;
+  moveSelectedSubtreeToParent(parentIdx);
 }
 
 function downloadFile(content,filename,type){
@@ -1273,15 +1456,28 @@ function collapseAll(){
 }
 
 /* ════════ HELPERS ════════ */
-function uid(){return Math.random().toString(36).slice(2,9);}
+function uid(){
+  if(typeof crypto!=='undefined' && crypto.randomUUID) return crypto.randomUUID().slice(0,8);
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;
+}
+const toastQueue=[];
+let toastBusy=false;
 function toast(msg){
+  toastQueue.push(msg);
+  if(toastBusy) return;
+  toastBusy=true;
   const t=document.getElementById('toast');
-  document.getElementById('toast-msg').textContent=msg;
-  t.classList.add('on');
-  clearTimeout(t._t);
-  t._t=setTimeout(()=>t.classList.remove('on'),2200);
+  const next=()=>{
+    const m=toastQueue.shift();
+    if(!m){toastBusy=false;return;}
+    document.getElementById('toast-msg').textContent=m;
+    t.classList.add('on');
+    setTimeout(()=>{t.classList.remove('on');setTimeout(next,120);},1600);
+  };
+  next();
 }
 function clearAll(){
+  clearTimeout(historyTimer);
   document.getElementById('raw').value='';
   document.getElementById('quick-add').value='';
   assemblies=[];
@@ -1305,10 +1501,11 @@ function clearAll(){
   document.getElementById('diff-rows').innerHTML='';
   document.getElementById('cmp-rows-a').innerHTML='';
   document.getElementById('cmp-rows-b').innerHTML='';
-  editingAsmIdx=null;
   editPanelAsmIdx=null;
   editHistory=[];
   document.getElementById('edit-asm-select').innerHTML='<option value="">— Select assembly to edit —</option>';
+  const ep=document.getElementById('edit-tree-panel');
+  if(ep) ep.innerHTML='<div class="edit-empty"><div class="empty-title">No Assembly Selected</div><div class="empty-desc">Select an assembly to edit sub-assemblies in tree mode.</div></div>';
   switchTab('tree');
 }
 
@@ -1401,9 +1598,11 @@ function populateEditSelect(){
 }
 
 function selectEditAsm(){
+  clearTimeout(historyTimer);
   const idx=document.getElementById('edit-asm-select').value;
   if(idx===''){
     editPanelAsmIdx=null;
+    document.getElementById('edit-tree-panel').innerHTML='<div class="edit-empty"><div class="empty-title">No Assembly Selected</div><div class="empty-desc">Select an assembly to edit sub-assemblies in tree mode.</div></div>';
     document.getElementById('edit-table-container').innerHTML=`
       <div class="edit-empty">
         <div class="empty-ring">
@@ -1419,6 +1618,7 @@ function selectEditAsm(){
   }
   editPanelAsmIdx=parseInt(idx);
   editHistory=[];
+  editSelectedRowIdx=null;
   renderEditTable();
   toast('Assembly loaded for editing');
 }
@@ -1434,6 +1634,7 @@ function renderEditTable(){
   if(editPanelAsmIdx===null) return;
   const asm=assemblies[editPanelAsmIdx];
   const container=document.getElementById('edit-table-container');
+  if(editSelectedRowIdx!==null && (editSelectedRowIdx<0 || editSelectedRowIdx>=asm.rows.length)) editSelectedRowIdx=null;
   const isEdit=editViewMode==='edit';
   
   container.innerHTML='';
@@ -1474,12 +1675,123 @@ function renderEditTable(){
   });
   
   container.appendChild(body);
+  renderEditContextBar();
+  renderEditStructureTree();
+}
+
+
+function getIndexedTree(rows){
+  const nodes=rows.map((r,i)=>({...r,rowIdx:i,children:[]}));
+  const roots=[];
+  const stack={};
+  nodes.forEach(node=>{
+    let parent=null;
+    for(let l=(node.level||1)-1;l>=1;l--){if(stack[l]){parent=stack[l];break;}}
+    if(parent) parent.children.push(node); else roots.push(node);
+    stack[node.level||1]=node;
+    Object.keys(stack).forEach(k=>{if(+k>(node.level||1)) delete stack[k];});
+  });
+  return roots;
+}
+
+function renderEditStructureTree(){
+  const panel=document.getElementById('edit-tree-panel');
+  if(!panel) return;
+  if(editPanelAsmIdx===null){
+    panel.innerHTML='<div class="edit-empty"><div class="empty-title">No Assembly Selected</div><div class="empty-desc">Select an assembly to edit sub-assemblies in tree mode.</div></div>';
+    return;
+  }
+  const asm=assemblies[editPanelAsmIdx];
+  const roots=getIndexedTree(asm.rows);
+  panel.innerHTML='';
+  const head=document.createElement('div');
+  head.className='edit-tree-head';
+  head.innerHTML='<div class="edit-tree-title">BOM Tree Editor</div><div class="edit-tree-meta">Drag node onto sub-assembly to re-parent</div>';
+  panel.appendChild(head);
+  const list=document.createElement('div');
+  list.className='edit-tree-list';
+
+  function drawNode(node,depth){
+    const row=document.createElement('div');
+    row.className='edit-tree-node'+(editSelectedRowIdx===node.rowIdx?' selected':'');
+    row.draggable=true;
+    row.dataset.idx=node.rowIdx;
+    row.onclick=()=>{editSelectedRowIdx=node.rowIdx; renderEditTable();};
+    row.ondragstart=e=>{editTreeDraggedIdx=node.rowIdx; e.dataTransfer.effectAllowed='move';};
+    row.ondragover=e=>{e.preventDefault(); if(editTreeDraggedIdx===null||editTreeDraggedIdx===node.rowIdx) return; row.classList.add('drag-over');};
+    row.ondragleave=()=>row.classList.remove('drag-over');
+    row.ondrop=e=>{e.preventDefault(); row.classList.remove('drag-over'); if(editTreeDraggedIdx===null||editTreeDraggedIdx===node.rowIdx) return; moveSubtreeUnderTarget(editTreeDraggedIdx,node.rowIdx); editTreeDraggedIdx=null;};
+    for(let i=0;i<depth;i++){const sp=document.createElement('span');sp.className='edit-tree-indent'; row.appendChild(sp);}    
+    const code=document.createElement('div');
+    code.className='edit-tree-code';
+    code.textContent=node.component||'—';
+    const meta=document.createElement('div');
+    meta.className='edit-tree-meta';
+    meta.textContent='L'+(node.level||1);
+    const add=document.createElement('button');
+    add.className='edit-tree-add';
+    add.type='button';
+    add.title='Add component under this sub-assembly';
+    add.textContent='+';
+    add.onclick=(ev)=>{ev.stopPropagation(); addChildPart(node.rowIdx);};
+    row.append(code,meta,add);
+    list.appendChild(row);
+    node.children.forEach(ch=>drawNode(ch,depth+1));
+  }
+
+  roots.forEach(r=>drawNode(r,0));
+  panel.appendChild(list);
+}
+
+function moveSubtreeUnderTarget(sourceIdx,targetIdx){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  const rows=asm.rows;
+  if(sourceIdx===targetIdx || !rows[sourceIdx] || !rows[targetIdx]) return;
+  const [ss,se]=getSubtreeRange(rows,sourceIdx);
+  if(targetIdx>=ss && targetIdx<se){toast('Cannot drop inside its own subtree');return;}
+
+  const sourceRootLevel=rows[sourceIdx].level||1;
+  const sourceMaxLevel=rows.slice(ss,se).reduce((m,r)=>Math.max(m,r.level||1),sourceRootLevel);
+  const sourceDepthSpan=sourceMaxLevel-sourceRootLevel;
+
+  saveEditHistory();
+  const extracted=rows.splice(ss,se-ss);
+  let t=targetIdx;
+  if(targetIdx>ss) t-=extracted.length;
+
+  const parentLevel=(rows[t].level||1);
+  const newRootLevel=parentLevel+1;
+  if(newRootLevel>6){
+    rows.splice(ss,0,...extracted);
+    toast('Cannot move under level 6 row');
+    return;
+  }
+  if(newRootLevel+sourceDepthSpan>6){
+    rows.splice(ss,0,...extracted);
+    toast('Move would exceed max level 6 for subtree');
+    return;
+  }
+
+  const insertAt=subtreeEndIndex(rows,t);
+  const delta=newRootLevel-sourceRootLevel;
+  extracted.forEach(r=>{r.level=(r.level||1)+delta;});
+  rows.splice(insertAt,0,...extracted);
+  editSelectedRowIdx=insertAt;
+  asm.tree=buildTree(rows);
+  renderEditTable();
+  toast(`Moved under ${rows[t].component||'target'}`);
 }
 
 function createEditRow(row,idx,isEdit){
   const rowEl=document.createElement('div');
-  rowEl.className='edit-row';
+  rowEl.className='edit-row'+(editSelectedRowIdx===idx?' selected':'');
   rowEl.dataset.rowIdx=idx;
+  rowEl.onclick=e=>{
+    if(e.target.closest('input,button,select,textarea')) return;
+    editSelectedRowIdx=idx;
+    renderEditTable();
+  };
   rowEl.draggable=isEdit;
   
   if(isEdit){
@@ -1505,17 +1817,9 @@ function createEditRow(row,idx,isEdit){
       if(!editDraggedRow||editDraggedRow===rowEl) return;
       rowEl.classList.remove('drag-over');
       
-      const fromIdx=parseInt(editDraggedRow.dataset.rowIdx);
-      const toIdx=parseInt(rowEl.dataset.rowIdx);
-      
-      saveEditHistory();
-      const asm=assemblies[editPanelAsmIdx];
-      const item=asm.rows.splice(fromIdx,1)[0];
-      asm.rows.splice(toIdx,0,item);
-      asm.tree=buildTree(asm.rows);
-      
-      renderEditTable();
-      toast('Row reordered');
+      const fromIdx=parseInt(editDraggedRow.dataset.rowIdx,10);
+      const toIdx=parseInt(rowEl.dataset.rowIdx,10);
+      moveSubtreeUnderTarget(fromIdx,toIdx);
     };
   }
   
@@ -1538,12 +1842,43 @@ function createEditRow(row,idx,isEdit){
   levelBadge.textContent=`L${row.level}`;
   rowEl.appendChild(levelBadge);
   
-  // Indent indicator
-  const indentEl=document.createElement('div');
-  indentEl.className='edit-text';
-  indentEl.textContent='└'.repeat(indent);
-  indentEl.style.color='var(--fg3)';
-  rowEl.appendChild(indentEl);
+  // Indent / level controls
+  if(isEdit){
+    const indentWrap=document.createElement('div');
+    indentWrap.className='edit-indent-controls';
+
+    const decBtn=document.createElement('button');
+    decBtn.className='edit-indent-btn';
+    decBtn.type='button';
+    decBtn.textContent='−';
+    decBtn.title='Outdent (decrease level)';
+    decBtn.onclick=()=>changeRowLevel(idx,-1);
+
+    const indentInput=document.createElement('input');
+    indentInput.className='edit-input edit-indent-input';
+    indentInput.type='number';
+    indentInput.min='0';
+    indentInput.max='5';
+    indentInput.value=String(indent);
+    indentInput.title='Indent level (0 = top level)';
+    indentInput.onchange=()=>setRowIndent(idx,indentInput.value);
+
+    const incBtn=document.createElement('button');
+    incBtn.className='edit-indent-btn';
+    incBtn.type='button';
+    incBtn.textContent='+';
+    incBtn.title='Indent (increase level)';
+    incBtn.onclick=()=>changeRowLevel(idx,1);
+
+    indentWrap.append(decBtn,indentInput,incBtn);
+    rowEl.appendChild(indentWrap);
+  }else{
+    const indentEl=document.createElement('div');
+    indentEl.className='edit-level-chip';
+    indentEl.textContent=`${indent}`;
+    indentEl.title=`Indent: ${indent}`;
+    rowEl.appendChild(indentEl);
+  }
   
   // Component
   if(isEdit){
@@ -1551,7 +1886,7 @@ function createEditRow(row,idx,isEdit){
     compInput.className='edit-input';
     compInput.value=row.component||'';
     compInput.onchange=()=>{
-      saveEditHistory();
+      saveEditHistoryDebounced();
       row.component=compInput.value;
       assemblies[editPanelAsmIdx].tree=buildTree(assemblies[editPanelAsmIdx].rows);
     };
@@ -1570,7 +1905,7 @@ function createEditRow(row,idx,isEdit){
     descInput.className='edit-input';
     descInput.value=row.description||'';
     descInput.onchange=()=>{
-      saveEditHistory();
+      saveEditHistoryDebounced();
       row.description=descInput.value;
     };
     rowEl.appendChild(descInput);
@@ -1590,7 +1925,7 @@ function createEditRow(row,idx,isEdit){
     qtyInput.step='0.001';
     qtyInput.value=row.qty||'';
     qtyInput.onchange=()=>{
-      saveEditHistory();
+      saveEditHistoryDebounced();
       row.qty=qtyInput.value;
     };
     rowEl.appendChild(qtyInput);
@@ -1608,7 +1943,7 @@ function createEditRow(row,idx,isEdit){
     uomInput.className='edit-input';
     uomInput.value=row.uom||'';
     uomInput.onchange=()=>{
-      saveEditHistory();
+      saveEditHistoryDebounced();
       row.uom=uomInput.value;
     };
     rowEl.appendChild(uomInput);
@@ -1625,6 +1960,18 @@ function createEditRow(row,idx,isEdit){
     const actions=document.createElement('div');
     actions.className='edit-row-actions';
     
+    const childBtn=document.createElement('button');
+    childBtn.className='edit-icon-btn add';
+    childBtn.title='Add child under this row';
+    childBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v6a2 2 0 0 0 2 2h12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    childBtn.onclick=()=>addChildPart(idx);
+
+    const belowBtn=document.createElement('button');
+    belowBtn.className='edit-icon-btn add';
+    belowBtn.title='Add below this row';
+    belowBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="14" y2="12"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>`;
+    belowBtn.onclick=()=>addSiblingBelow(idx);
+
     const dupBtn=document.createElement('button');
     dupBtn.className='edit-icon-btn dup';
     dupBtn.title='Duplicate';
@@ -1637,6 +1984,8 @@ function createEditRow(row,idx,isEdit){
     delBtn.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     delBtn.onclick=()=>deleteEditRow(idx);
     
+    actions.appendChild(childBtn);
+    actions.appendChild(belowBtn);
     actions.appendChild(dupBtn);
     actions.appendChild(delBtn);
     rowEl.appendChild(actions);
@@ -1649,9 +1998,16 @@ function createEditRow(row,idx,isEdit){
 
 function saveEditHistory(){
   if(editPanelAsmIdx===null) return;
-  const snapshot=JSON.parse(JSON.stringify(assemblies[editPanelAsmIdx].rows));
+  const snapshot=(typeof structuredClone==='function')
+    ? structuredClone(assemblies[editPanelAsmIdx].rows)
+    : JSON.parse(JSON.stringify(assemblies[editPanelAsmIdx].rows));
   editHistory.push(snapshot);
   if(editHistory.length>50) editHistory.shift(); // Keep last 50 changes
+}
+
+function saveEditHistoryDebounced(){
+  clearTimeout(historyTimer);
+  historyTimer=setTimeout(()=>saveEditHistory(),220);
 }
 
 function undoLastChange(){
@@ -1665,13 +2021,67 @@ function undoLastChange(){
 
 function addNewRowEdit(){
   if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
-  saveEditHistory();
+  if(editSelectedRowIdx!==null){
+    addSiblingBelow(editSelectedRowIdx);
+    return;
+  }
+  insertPartAt({insertAt:null,level:1,message:'New top-level part added'});
+}
+
+function addChildPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Child');return;}
+  addChildPart(editSelectedRowIdx);
+}
+
+function addSiblingPartFromSelection(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  if(editSelectedRowIdx===null){toast('Select a row, then click Add Below');return;}
+  addSiblingBelow(editSelectedRowIdx);
+}
+
+function subtreeEndIndex(rows,startIdx){
+  const base=(rows[startIdx]?.level)||1;
+  let i=startIdx+1;
+  while(i<rows.length && (rows[i].level||1)>base) i++;
+  return i;
+}
+
+function addChildPart(idx){
   const asm=assemblies[editPanelAsmIdx];
-  const newRow={level:1,component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),description:'New component',qty:'1',uom:'NO',supplier:'',id:uid()};
-  asm.rows.push(newRow);
+  if(!asm || !asm.rows[idx]) return;
+  const level=Math.min(6,(asm.rows[idx].level||1)+1);
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:`Child part added under ${asm.rows[idx].component||'row'}`});
+}
+
+function addSiblingBelow(idx){
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const level=asm.rows[idx].level||1;
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  insertPartAt({insertAt,level,message:'Part added below selected row'});
+}
+
+function insertPartAt({insertAt=null,level=1,message='New part added'}={}){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  saveEditHistory();
+  const newRow={
+    level:Math.max(1,Math.min(6,level||1)),
+    component:'NEW-PART-'+uid().slice(0,4).toUpperCase(),
+    description:'New component',
+    qty:'1',
+    uom:'NO',
+    supplier:'',
+    id:uid()
+  };
+  const at=(insertAt===null || insertAt>asm.rows.length) ? asm.rows.length : Math.max(0,insertAt);
+  asm.rows.splice(at,0,newRow);
+  editSelectedRowIdx=at;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
-  toast('New part added');
+  toast(message);
 }
 
 function duplicateEditRow(idx){
@@ -1680,7 +2090,9 @@ function duplicateEditRow(idx){
   const asm=assemblies[editPanelAsmIdx];
   const row=asm.rows[idx];
   const newRow={...row,id:uid(),component:row.component+'-COPY'};
-  asm.rows.splice(idx+1,0,newRow);
+  const insertAt=subtreeEndIndex(asm.rows,idx);
+  asm.rows.splice(insertAt,0,newRow);
+  editSelectedRowIdx=insertAt;
   asm.tree=buildTree(asm.rows);
   renderEditTable();
   toast('Row duplicated');
@@ -1688,13 +2100,22 @@ function duplicateEditRow(idx){
 
 function deleteEditRow(idx){
   if(editPanelAsmIdx===null) return;
-  if(!confirm('Delete this row?')) return;
-  saveEditHistory();
   const asm=assemblies[editPanelAsmIdx];
-  asm.rows.splice(idx,1);
+  const row=asm.rows[idx];
+  if(!row) return;
+  const end=subtreeEndIndex(asm.rows,idx);
+  const count=end-idx;
+  const msg=count>1 ? `Delete this row and its ${count-1} child row(s)?` : 'Delete this row?';
+  if(!confirm(msg)) return;
+  saveEditHistory();
+  asm.rows.splice(idx,count);
+  if(editSelectedRowIdx!==null){
+    if(editSelectedRowIdx>=idx && editSelectedRowIdx<end) editSelectedRowIdx=Math.min(idx,asm.rows.length-1);
+    else if(editSelectedRowIdx>=end) editSelectedRowIdx-=count;
+  }
   asm.tree=buildTree(asm.rows);
   renderEditTable();
-  toast('Row deleted');
+  toast(count>1?`Deleted ${count} rows (subtree)`:'Row deleted');
 }
 
 function saveEditChanges(){
@@ -1706,7 +2127,7 @@ function saveEditChanges(){
 }
 
 /* ════════ DIFF FUNCTIONS ════════ */
-function getComparePool(){return bomVersions.length ? bomVersions : assemblies;}
+function getComparePool(){return bomVersions.length ? [...assemblies, ...bomVersions] : assemblies;}
 
 function populateDiffSelects(){
   const pool=getComparePool();
@@ -1732,14 +2153,12 @@ function parseQty(s){
 function buildPartMap(asm){
   const map=new Map();
   asm.rows.forEach(r=>{
-    const key=(r.component||'').trim();
-    if(!key) return;
-    if(!map.has(key)) map.set(key,{comp:key,description:r.description||'',supplier:r.supplier||'',qty:0,uom:r.uom||'NO'});
+    const comp=(r.component||'').trim();
+    if(!comp) return;
+    const key=`L${r.level||1}|${comp}|${(r.description||'').trim()}|${(r.uom||'NO').trim()}|${(r.supplier||'').trim()}`;
+    if(!map.has(key)) map.set(key,{comp,level:r.level||1,description:r.description||'',supplier:r.supplier||'',qty:0,uom:r.uom||'NO'});
     const it=map.get(key);
     it.qty += parseQty(r.qty);
-    if(!it.description && r.description) it.description=r.description;
-    if(!it.supplier && r.supplier) it.supplier=r.supplier;
-    if(!it.uom && r.uom) it.uom=r.uom;
   });
   return map;
 }
@@ -1756,17 +2175,16 @@ function diffAssemblies(asmA, asmB){
       const sameQty=Math.abs(a.qty-b.qty)<0.0001;
       const sameSup=(a.supplier||'')===(b.supplier||'');
       const type=(sameQty&&sameSup)?'shared':'qty-diff';
-      rows.push({comp:k,type,a:{...a,qty:String(a.qty)},b:{...b,qty:String(b.qty)}});
+      rows.push({comp:(a?.comp||b?.comp||k),type,a:{...a,qty:String(a.qty)},b:{...b,qty:String(b.qty)}});
     }else if(a){
-      rows.push({comp:k,type:'only-a',a:{...a,qty:String(a.qty)},b:null});
+      rows.push({comp:(a?.comp||k),type:'only-a',a:{...a,qty:String(a.qty)},b:null});
     }else{
-      rows.push({comp:k,type:'only-b',a:null,b:{...b,qty:String(b.qty)}});
+      rows.push({comp:(b?.comp||k),type:'only-b',a:null,b:{...b,qty:String(b.qty)}});
     }
   });
   return rows;
 }
 
-let lastDiffResults=[];
 let activeFilters=new Set(['shared','only-a','only-b','qty-diff']);
 
 function runDiff(){
