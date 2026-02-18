@@ -47,7 +47,14 @@
 .edit-mode-btn svg{opacity:.7;}
 .edit-mode-btn.active svg{opacity:1;}
 
-.edit-actions-bar{display:flex;gap:6px;}
+.edit-actions-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.edit-helper{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,200,150,.06);border:1px solid var(--accent-bd);border-radius:8px;font-size:11px;color:var(--fg2);}
+.edit-helper strong{color:var(--accent);font-weight:700;}
+.edit-indent-controls{display:flex;align-items:center;gap:4px;}
+.edit-indent-btn{width:24px;height:24px;border:1px solid var(--bd2);border-radius:4px;background:rgba(255,255,255,.04);color:var(--fg2);font-size:13px;font-weight:700;cursor:pointer;line-height:1;transition:all .15s;}
+.edit-indent-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-bd);}
+.edit-indent-input{width:52px;text-align:center;}
+.edit-level-chip{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--fg3);background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:4px;padding:4px 6px;text-align:center;}
 .edit-action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--bd2);color:var(--fg2);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .edit-action-btn:hover{background:rgba(255,255,255,.09);color:var(--fg);transform:translateY(-1px);}
 .edit-action-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);}
@@ -542,11 +549,19 @@ textarea::placeholder{color:var(--fg3);}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           Undo
         </button>
+        <button class="edit-action-btn" onclick="cloneEditedAssembly()" title="Create a new BOM from this edited assembly">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          New BOM from Edit
+        </button>
         <button class="edit-action-btn primary" onclick="saveEditChanges()" title="Save changes">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Save Changes
         </button>
       </div>
+    </div>
+
+    <div class="edit-helper">
+      <strong>Tip:</strong> Use <em>Indent</em> controls to set hierarchy quickly. Then click <em>New BOM from Edit</em> to clone this BOM into a new revision.
     </div>
 
     <!-- Edit Table View -->
@@ -1194,16 +1209,75 @@ function exportCurrentExcel(){
 
 function saveAsNewBOM(){
   if(!assemblies.length){toast('No data to save');return;}
-  const name=prompt('Enter new BOM name:',assemblies[0].material+'-NEW');
-  if(!name) return;
-  assemblies.forEach(a=>{
-    a.material=name;
-    a.version=(a.version||'R1')+'-NEW';
-  });
-  saveCurrentBom();
-  toggleExportMenu();
+  const sourceIdx=editPanelAsmIdx!==null ? editPanelAsmIdx : 0;
+  createClonedBomFromAssembly(sourceIdx,{fromExportMenu:true});
+}
+
+function cloneEditedAssembly(){
+  if(editPanelAsmIdx===null){toast('Select an assembly first');return;}
+  createClonedBomFromAssembly(editPanelAsmIdx,{fromExportMenu:false});
+}
+
+function createClonedBomFromAssembly(sourceIdx,{fromExportMenu=false}={}){
+  const src=assemblies[sourceIdx];
+  if(!src){toast('Source assembly not found');return;}
+
+  const newMaterial=prompt('New BOM code / material:',`${src.material}-NEW`);
+  if(!newMaterial) return;
+  const newVersion=prompt('New BOM version:',`${src.version||'R1'}-NEW`);
+  if(newVersion===null) return;
+  const newProject=prompt('Project name for new BOM:',src.project||src.description||'Derived BOM');
+  if(newProject===null) return;
+
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.material=newMaterial.trim()||`${src.material}-NEW`;
+  copy.version=(newVersion||`${src.version||'R1'}-NEW`).trim();
+  copy.project=(newProject||src.project||src.description||'Derived BOM').trim();
+  copy.description=copy.project;
+  copy.date=new Date().toISOString().slice(0,10);
+  copy.rows=(copy.rows||[]).map(r=>({...r,id:uid()}));
+  copy.tree=buildTree(copy.rows);
+
+  const id=`${copy.project||'P'}|${copy.version||'R'}|${copy.material}`;
+  const existing=bomVersions.findIndex(v=>v.id===id);
+  const snap={...JSON.parse(JSON.stringify(copy)),id,savedAt:new Date().toISOString()};
+  if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
+
+  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length]});
+  renderBomLibrary();
   renderNav();
   renderAll();
+  updateStats();
+  populateDiffSelects();
+  populateBulkTargets();
+  populateEditSelect();
+  if(fromExportMenu) toggleExportMenu();
+  toast(`New BOM created from ${src.material}`);
+}
+
+function changeRowLevel(idx,delta){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const next=Math.max(1,Math.min(6,(parseInt(asm.rows[idx].level,10)||1)+delta));
+  if(next===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  asm.rows[idx].level=next;
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
+}
+
+function setRowIndent(idx,indentValue){
+  if(editPanelAsmIdx===null) return;
+  const asm=assemblies[editPanelAsmIdx];
+  if(!asm || !asm.rows[idx]) return;
+  const indent=Math.max(0,Math.min(5,parseInt(indentValue,10)||0));
+  const nextLevel=indent+1;
+  if(nextLevel===(parseInt(asm.rows[idx].level,10)||1)) return;
+  saveEditHistory();
+  asm.rows[idx].level=nextLevel;
+  asm.tree=buildTree(asm.rows);
+  renderEditTable();
 }
 
 function downloadFile(content,filename,type){
@@ -1538,12 +1612,43 @@ function createEditRow(row,idx,isEdit){
   levelBadge.textContent=`L${row.level}`;
   rowEl.appendChild(levelBadge);
   
-  // Indent indicator
-  const indentEl=document.createElement('div');
-  indentEl.className='edit-text';
-  indentEl.textContent='└'.repeat(indent);
-  indentEl.style.color='var(--fg3)';
-  rowEl.appendChild(indentEl);
+  // Indent / level controls
+  if(isEdit){
+    const indentWrap=document.createElement('div');
+    indentWrap.className='edit-indent-controls';
+
+    const decBtn=document.createElement('button');
+    decBtn.className='edit-indent-btn';
+    decBtn.type='button';
+    decBtn.textContent='−';
+    decBtn.title='Outdent (decrease level)';
+    decBtn.onclick=()=>changeRowLevel(idx,-1);
+
+    const indentInput=document.createElement('input');
+    indentInput.className='edit-input edit-indent-input';
+    indentInput.type='number';
+    indentInput.min='0';
+    indentInput.max='5';
+    indentInput.value=String(indent);
+    indentInput.title='Indent level (0 = top level)';
+    indentInput.onchange=()=>setRowIndent(idx,indentInput.value);
+
+    const incBtn=document.createElement('button');
+    incBtn.className='edit-indent-btn';
+    incBtn.type='button';
+    incBtn.textContent='+';
+    incBtn.title='Indent (increase level)';
+    incBtn.onclick=()=>changeRowLevel(idx,1);
+
+    indentWrap.append(decBtn,indentInput,incBtn);
+    rowEl.appendChild(indentWrap);
+  }else{
+    const indentEl=document.createElement('div');
+    indentEl.className='edit-level-chip';
+    indentEl.textContent=`${indent}`;
+    indentEl.title=`Indent: ${indent}`;
+    rowEl.appendChild(indentEl);
+  }
   
   // Component
   if(isEdit){
