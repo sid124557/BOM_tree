@@ -959,9 +959,8 @@ function setHeader(name,code,color){
 /* ════════ ASSEMBLY BLOCK ════════ */
 function makeAsmBlock(asm,idx){
   const total=countNodes(asm.tree);
-  const isEditing = false;
   const block=document.createElement('div');
-  block.className='asm-block'+(isEditing?' edit-mode-active':'');
+  block.className='asm-block';
   block.dataset.asm=idx;
   block.style.cssText=`border-top:2px solid ${asm.color};`;
 
@@ -974,90 +973,78 @@ function makeAsmBlock(asm,idx){
       <div class="asm-bar-desc">${asm.description||'No description'}</div>
     </div>
     <div class="asm-meta">
-      <button class="mode-toggle ${isEditing?'active':''}" onclick="toggleAsmEdit(${idx})" title="${isEditing?'Exit edit mode':'Edit this assembly'}">
+      <button class="mode-toggle" onclick="toggleAsmEdit(${idx})" title="Open Edit Workbench for this assembly">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        ${isEditing?'Done':'Edit'}
+        Edit
       </button>
       <span class="asm-cnt" style="background:${asm.color}1a;color:${asm.color}">${total} parts</span>
       <svg class="asm-chev" style="transform:rotate(90deg)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
 
   const colHdr=document.createElement('div');
-  colHdr.className='col-hdr rg'+(isEditing?'':' view-mode');
+  colHdr.className='col-hdr rg view-mode';
+  colHdr.innerHTML=`<span></span><span>Level</span><span>Component</span><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:center">UoM</span><span></span>`;
+
+  const body=document.createElement('div');
+  body.className='parts-body open';
+  body.appendChild(colHdr);
+
+  const partsDiv=document.createElement('div');
+  asm.tree.forEach(nd=>partsDiv.appendChild(makePartWrap(nd,asm.color,idx)));
+  body.appendChild(partsDiv);
+
+  bar.onclick=(e)=>{
+    if(e.target.closest('.mode-toggle')) return;
+    const open=body.classList.toggle('open');
+    bar.querySelector('.asm-chev').style.transform=open?'rotate(90deg)':'rotate(0)';
+  };
+
+  block.appendChild(bar);
+  block.appendChild(body);
+  return block;
+}
+
+function makePartWrap(node,asmColor,asmIdx){
+  const wrap=document.createElement('div');
+  wrap.className='part-wrap';
+  wrap.dataset.comp=(node.component||'').toLowerCase();
+  wrap.dataset.desc=(node.description||'').toLowerCase();
+  wrap.dataset.nodeId=node.id;
+  wrap.dataset.asmIdx=asmIdx;
+  wrap.draggable=false;
 
   const lvCls=`l${Math.min(node.level,6)}`;
   const row=document.createElement('div');
-  row.className='part-row rg'+(isEditing?'':' view-mode');
+  row.className='part-row rg view-mode';
 
-  // Toggle
   const tog=document.createElement('div');
   tog.className=`ptog${node.hasChildren?'':' leaf'}`;
   tog.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
   row.appendChild(tog);
 
-  // Level
   const lv=mk('span',`lbadge ${lvCls}`,`L${node.level}`);
   row.appendChild(lv);
 
-  // Component
   const code=mk('div','pcode',node.component||'—');
   code.title=node.component;
   row.appendChild(code);
 
-  // Description
-  if(isEditing){
-    const descInput=document.createElement('input');
-    descInput.className='edit-field pdesc';
-    descInput.value=node.description||'';
-    descInput.onchange=()=>{node.description=descInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(descInput);
-  }else{
-    const desc=mk('div','pdesc',node.description||'—');
-    desc.title=node.description;
-    row.appendChild(desc);
-  }
+  const desc=mk('div','pdesc',node.description||'—');
+  desc.title=node.description;
+  row.appendChild(desc);
 
-  // Qty
   const qty=mk('div','pqty',node.qty||'—');
   row.appendChild(qty);
 
-  // UoM
-  if(isEditing){
-    const uomInput=document.createElement('input');
-    uomInput.className='edit-field puom';
-    uomInput.value=node.uom||'';
-    uomInput.onchange=()=>{node.uom=uomInput.value;updateNodeInAsm(asmIdx,node);};
-    row.appendChild(uomInput);
-  }else{
-    const uom=mk('div','puom',node.uom||'—');
-    row.appendChild(uom);
-  }
+  const uom=mk('div','puom',node.uom||'—');
+  row.appendChild(uom);
 
-  // Actions / Copy
-  if(isEditing){
-    const actions=document.createElement('div');
-    actions.className='edit-actions';
-    const delBtn=document.createElement('button');
-    delBtn.className='edit-btn del';
-    delBtn.title='Delete row';
-    delBtn.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
-    delBtn.onclick=()=>deleteRow(asmIdx,node.id);
-    const dupBtn=document.createElement('button');
-    dupBtn.className='edit-btn add';
-    dupBtn.title='Duplicate row';
-    dupBtn.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    dupBtn.onclick=()=>duplicateRow(asmIdx,node.id);
-    actions.appendChild(delBtn);
-    actions.appendChild(dupBtn);
-    row.appendChild(actions);
-  }else{
-    const copyBtn=document.createElement('button');
-    copyBtn.className='copy-btn';
-    copyBtn.title='Copy row';
-    copyBtn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    copyBtn.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(`${node.component}\t${node.description}\t${node.qty}\t${node.uom}`);toast('Row copied');};
-    row.appendChild(copyBtn);
-  }
+  const copyBtn=document.createElement('button');
+  copyBtn.className='copy-btn';
+  copyBtn.title='Copy row';
+  copyBtn.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  copyBtn.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(`${node.component}	${node.description}	${node.qty}	${node.uom}`);toast('Row copied');};
+  row.appendChild(copyBtn);
 
   wrap.appendChild(row);
 
@@ -1068,11 +1055,12 @@ function makeAsmBlock(asm,idx){
     node.children.forEach(child=>cw.appendChild(makePartWrap(child,asmColor,asmIdx)));
     wrap.appendChild(cw);
     row.onclick=e=>{
-      if(e.target.closest('.copy-btn')||e.target.closest('input')||e.target.closest('.edit-btn')) return;
+      if(e.target.closest('.copy-btn')) return;
       const open=cw.classList.toggle('open');
       tog.classList.toggle('open',open);
     };
   }
+
   return wrap;
 }
 
