@@ -501,7 +501,7 @@ textarea::placeholder{color:var(--fg3);}
     </div>
     <div class="ctrls">
       <div class="export-menu">
-        <button class="ic-btn" title="Export options" onclick="toggleExportMenu()">
+        <button class="ic-btn" title="Export options" onclick="toggleExportMenu(event)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
         <div class="export-dropdown" id="export-dropdown">
@@ -749,42 +749,65 @@ let editTreeDraggedIdx=null;
 let lastDiffResults=[];
 let historyTimer=null;
 let lastHistorySignature='';
+let parseWarnings=[];
+let treeScrollTop=0;
 
 /* ════════ PARSE ════════ */
 function parseData(raw){
+  parseWarnings=[];
   const lines=raw.trim().split('\n');
   let start=0;
   const h=lines[0].split('\t').map(x=>(x||'').trim().toLowerCase());
   const hasHeader = h.includes('level') || h.includes('material') || h.includes('component');
   if(hasHeader){start=1;}
 
-  const idx={
-    level: hasHeader ? h.findIndex(v=>v==='level') : 1,
-    material: hasHeader ? h.findIndex(v=>v==='material') : 2,
-    matDesc: hasHeader ? h.findIndex(v=>v.includes('material description')) : 3,
-    component: hasHeader ? h.findIndex(v=>v==='component') : 4,
-    compDesc: hasHeader ? h.findIndex(v=>v.includes('component description')) : 5,
-    qty: hasHeader ? h.findIndex(v=>v.includes('qty') && (v.includes('cun')||v==='qty'||v.includes('comp. qty(cun)'))) : 6,
-    uom: hasHeader ? h.findIndex(v=>v==='uom' || v.includes('unit')) : 8
+  const matchIdx=(aliases,fallback)=>{
+    if(!hasHeader) return fallback;
+    const i=h.findIndex(v=>aliases.some(a=>v===a || v.includes(a)));
+    return i>=0?i:fallback;
   };
+
+  const idx={
+    level: matchIdx(['level','item level'],1),
+    material: matchIdx(['material','header material','assembly'],2),
+    matDesc: matchIdx(['material description','material desc'],3),
+    component: matchIdx(['component','component number','component material'],4),
+    compDesc: matchIdx(['component description','component desc','description'],5),
+    qty: matchIdx(['comp. qty(cun)','qty(bun)','qty','quantity'],6),
+    uom: matchIdx(['uom','unit','base unit'],8)
+  };
+
+  if(hasHeader){
+    ['level','material','component','qty'].forEach(k=>{
+      if(idx[k]==null || idx[k]<0) parseWarnings.push(`Could not detect "${k}" column reliably; fallback index used.`);
+    });
+  }
 
   const pick=(arr,ind,fallback)=> (ind!=null && ind>=0 && ind<arr.length ? arr[ind] : (arr[fallback]||''));
   const asmMap=new Map();
   let colorIdx=0;
+  let seenParentLevel=0;
   for(let i=start;i<lines.length;i++){
     const c=lines[i].split('\t');
     if(c.length<6) continue;
-    const level=parseInt((pick(c,idx.level,1)||'').trim(),10);
+    let level=parseInt((pick(c,idx.level,1)||'').trim(),10);
     const material=(pick(c,idx.material,2)||'').trim();
     const matDesc=(pick(c,idx.matDesc,3)||'').trim();
     const component=(pick(c,idx.component,4)||'').trim();
     const compDesc=(pick(c,idx.compDesc,5)||'').trim();
-    const qty=(pick(c,idx.qty,6)||'').trim().replace(/,/g,'');
+    const qty=normalizeQtyString((pick(c,idx.qty,6)||'').trim());
     const uom=(pick(c,idx.uom,8)||'').trim();
-    if(isNaN(level)||!material||!component) continue;
+    if(!Number.isFinite(level)) continue;
+    if(level<1) level=1;
+    if(level>seenParentLevel+1){
+      parseWarnings.push(`Row ${i+1}: level jump L${seenParentLevel}->L${level}; treated as nearest valid hierarchy.`);
+    }
+    seenParentLevel=Math.max(1,Math.min(level,seenParentLevel+1));
+    if(!material||!component) continue;
     if(!asmMap.has(material)){
       asmMap.set(material,{material,description:matDesc,color:COLORS[colorIdx%COLORS.length],rows:[]});
       colorIdx++;
+      seenParentLevel=0;
     }
     const asm=asmMap.get(material);
     if(!asm.description&&matDesc) asm.description=matDesc;
@@ -808,12 +831,72 @@ function buildTree(rows){
   }
   return roots;
 }
+function deepCopy(v){
+  return (typeof structuredClone==='function') ? structuredClone(v) : JSON.parse(JSON.stringify(v));
+}
+
+function normalizeQtyString(v){
+  const n=parseQty(v);
+  return Number.isFinite(n) ? String(n) : '0';
+}
+
+function compareKey(a){
+  const rowSig=(a.rows||[]).map(r=>`${r.level||1}|${(r.component||'').trim()}|${(r.description||'').trim()}|${normalizeQtyString(r.qty)}|${(r.uom||'').trim()}|${(r.supplier||'').trim()}`).join('||');
+  return `${a.id||''}|${a.material||''}|${a.version||''}|${a.project||''}|${rowSig}`;
+}
+
+function syncDiffChipUI(){
+  document.querySelectorAll('.diff-chip').forEach(btn=>{
+    const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+    const type=m?m[1]:'';
+    btn.classList.toggle('on',activeFilters.has(type));
+  });
+}
+
+function resetDiffFilters(){
+  activeFilters=new Set(['shared','only-a','only-b','qty-diff','supplier-diff','both-diff']);
+  syncDiffChipUI();
+}
+
+function flushEditHistoryDebounced(){
+  if(!historyTimer) return;
+  clearTimeout(historyTimer);
+  historyTimer=null;
+  saveEditHistory();
+}
+
+function makeEditableClone(idx,reason='edit'){
+  const src=assemblies[idx];
+  if(!src) return idx;
+  const clone=deepCopy(src);
+  clone.immutable=false;
+  clone.sourceRef=src.sourceRef||src.material;
+  clone.material=(src.material||'BOM')+'-WORK';
+  clone.version=(src.version||'R1')+'-WORK';
+  clone.rows=(clone.rows||[]).map(r=>({...r,id:r.id||uid()}));
+  clone.tree=buildTree(clone.rows);
+  clone.color=COLORS[assemblies.length%COLORS.length];
+  assemblies.push(clone);
+  const newIdx=assemblies.length-1;
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();populateEditSelect();
+  document.getElementById('edit-asm-select').value=String(newIdx);
+  document.getElementById('bulk-target').value=String(newIdx);
+  toast(`Created editable working copy for ${reason}`);
+  return newIdx;
+}
+
+function ensureAssemblyMutable(idx,reason='edit'){
+  const asm=assemblies[idx];
+  if(!asm) return idx;
+  return asm.immutable ? makeEditableClone(idx,reason) : idx;
+}
 
 /* ════════ ENTRY POINT ════════ */
 function go(){
   const raw=document.getElementById('raw').value;
   if(!raw.trim()){toast('No data entered');return;}
   assemblies=parseData(raw);
+  if(parseWarnings.length){toast(`Parse warning: ${parseWarnings[0]}${parseWarnings.length>1?' …':''}`);}
   if(!assemblies.length){toast('Could not parse any assemblies');return;}
   const project=(document.getElementById('meta-project').value||'').trim();
   const version=(document.getElementById('meta-version').value||'').trim();
@@ -825,6 +908,8 @@ function go(){
     a.date=date||a.date||new Date().toISOString().slice(0,10);
     a.rows.forEach(r=>{if(!r.supplier) r.supplier=supplier||'';});
     a.tree=buildTree(a.rows);
+    a.immutable=true;
+    a.sourceRef=a.material;
   });
   renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
 }
@@ -837,7 +922,7 @@ function quickAddRows(){
   const date=(document.getElementById('meta-date').value||new Date().toISOString().slice(0,10)).trim();
   const supplierDefault=(document.getElementById('meta-supplier').value||'').trim();
   const material=`${project.replace(/\s+/g,'_').toUpperCase()}-${version}`;
-  const asm={material,description:project,color:COLORS[assemblies.length%COLORS.length],rows:[],project,version,date};
+  const asm={material,description:project,color:COLORS[assemblies.length%COLORS.length],rows:[],project,version,date,immutable:true,sourceRef:material};
   txt.split(/\n+/).forEach((ln)=>{
     const cols=ln.split('\t');
     if(!cols.length) return;
@@ -894,6 +979,8 @@ function loadSavedBom(idx){
   assemblies[0].color=COLORS[0];
   assemblies[0].rows.forEach(r=>{if(!r.id) r.id=uid();});
   assemblies[0].tree=buildTree(assemblies[0].rows);
+  assemblies[0].immutable=true;
+  assemblies[0].sourceRef=assemblies[0].sourceRef||assemblies[0].material;
   document.getElementById('meta-project').value=assemblies[0].project||'';
   document.getElementById('meta-version').value=assemblies[0].version||'';
   document.getElementById('meta-date').value=assemblies[0].date||'';
@@ -917,7 +1004,7 @@ function deleteBom(idx){bomVersions.splice(idx,1);renderBomLibrary();}
 function populateBulkTargets(){
   const sel=document.getElementById('bulk-target');
   sel.innerHTML='<option value="">Select loaded assembly</option>';
-  assemblies.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.material} — ${a.version||''}`;sel.appendChild(o);});
+  assemblies.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.material} ${a.immutable?'🔒':''} — ${a.version||''}`;sel.appendChild(o);});
 }
 
 function applyBulkEdit(){
@@ -930,7 +1017,9 @@ function applyBulkEdit(){
     toast('Qty factor must be a positive number');
     return;
   }
-  const asm=assemblies[idx];
+  const mutableIdx=ensureAssemblyMutable(parseInt(idx,10),'bulk edit');
+  if(mutableIdx!==parseInt(idx,10)) document.getElementById('bulk-target').value=String(mutableIdx);
+  const asm=assemblies[mutableIdx];
   let changed=0;
   asm.rows.forEach(r=>{
     if(sup){r.supplier=sup;changed++;}
@@ -938,7 +1027,7 @@ function applyBulkEdit(){
   });
   asm.tree=buildTree(asm.rows);
   renderAll();
-  if(editPanelAsmIdx===parseInt(idx,10)) renderEditTable();
+  if(editPanelAsmIdx===mutableIdx) renderEditTable();
   toast(`Bulk edit applied (${changed} updates)`);
 }
 
@@ -1125,6 +1214,7 @@ function fallbackCopyText(text){
 function toggleAsmEdit(idx){
   clearTimeout(historyTimer);
   if(!assemblies[idx]) return;
+  idx=ensureAssemblyMutable(idx,'edit');
   editPanelAsmIdx=idx;
   editSelectedRowIdx=null;
   editHistory=[];
@@ -1138,7 +1228,8 @@ function toggleAsmEdit(idx){
 }
 
 /* ════════ EXPORT FUNCTIONS ════════ */
-function toggleExportMenu(){
+function toggleExportMenu(ev){
+  ev?.stopPropagation?.();
   document.getElementById('export-dropdown').classList.toggle('show');
 }
 
@@ -1198,13 +1289,14 @@ function createClonedBomFromAssembly(sourceIdx,{fromExportMenu=false}={}){
   copy.date=new Date().toISOString().slice(0,10);
   copy.rows=(copy.rows||[]).map(r=>({...r,id:uid()}));
   copy.tree=buildTree(copy.rows);
+  copy.immutable=false;
 
   const id=`${copy.project||'P'}|${copy.version||'R'}|${copy.material}`;
   const existing=bomVersions.findIndex(v=>v.id===id);
   const snap={...JSON.parse(JSON.stringify(copy)),id,savedAt:new Date().toISOString()};
   if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
 
-  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length]});
+  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length],immutable:false});
   renderBomLibrary();
   editPanelAsmIdx=null;
   editHistory=[];
@@ -1389,7 +1481,7 @@ function downloadFile(content,filename,type){
 }
 
 // Close export menu when clicking outside
-document.addEventListener('click',e=>{
+document.addEventListener('pointerdown',e=>{
   if(!e.target.closest('.export-menu')){
     document.getElementById('export-dropdown').classList.remove('show');
   }
@@ -1471,6 +1563,8 @@ function clearAll(){
   document.getElementById('raw').value='';
   document.getElementById('quick-add').value='';
   assemblies=[];
+  bomVersions=[];
+  renderBomLibrary();
   lastDiffResults=[];
   compareRows=[];
   document.getElementById('tree').innerHTML=`<div class="empty"><div class="empty-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div><div class="empty-title">No BOM data loaded</div><div class="empty-desc">Paste your data and click Generate.</div></div>`;
@@ -1497,6 +1591,7 @@ function clearAll(){
   document.getElementById('edit-asm-select').innerHTML='<option value="">— Select assembly to edit —</option>';
   const ep=document.getElementById('edit-tree-panel');
   if(ep) ep.innerHTML='<div class="edit-empty"><div class="empty-title">No Assembly Selected</div><div class="empty-desc">Select an assembly to edit sub-assemblies in tree mode.</div></div>';
+  resetDiffFilters();
   switchTab('tree');
 }
 
@@ -1552,6 +1647,8 @@ document.getElementById('meta-date').value=new Date().toISOString().slice(0,10);
 
 /* ════════ TAB SWITCHING ════════ */
 function switchTab(tab){
+  const treeEl=document.getElementById('tree');
+  if(treeEl && tab!=='tree') treeScrollTop=treeEl.scrollTop;
   const isTree = tab==='tree';
   const isEdit = tab==='edit';
   const isDiff = tab==='diff';
@@ -1561,6 +1658,7 @@ function switchTab(tab){
   document.getElementById('tab-diff').classList.toggle('active',isDiff);
   
   document.getElementById('tree').style.display = isTree ? '' : 'none';
+  if(isTree && treeEl) treeEl.scrollTop=treeScrollTop;
   document.getElementById('edit-panel').classList.toggle('visible',isEdit);
   document.getElementById('diff-panel').classList.toggle('visible',isDiff);
   
@@ -1581,8 +1679,8 @@ function populateEditSelect(){
   sel.innerHTML='<option value="">— Select assembly to edit —</option>';
   assemblies.forEach((a,i)=>{
     const opt=document.createElement('option');
-    opt.value=i;
-    opt.textContent=`${a.material} — ${a.description||'No description'}`;
+    opt.value=compareKey(a);
+    opt.textContent=`${a.material} ${a.immutable?'🔒':''} — ${a.description||'No description'}`;
     sel.appendChild(opt);
   });
   if(prev!=='' && assemblies[prev]) sel.value=prev;
@@ -1607,7 +1705,9 @@ function selectEditAsm(){
       </div>`;
     return;
   }
-  editPanelAsmIdx=parseInt(idx);
+  const safeIdx=ensureAssemblyMutable(parseInt(idx,10),'edit');
+  editPanelAsmIdx=safeIdx;
+  document.getElementById('edit-asm-select').value=String(safeIdx);
   editHistory=[];
   lastHistorySignature='';
   editSelectedRowIdx=null;
@@ -1736,7 +1836,7 @@ function renderEditStructureTree(){
 }
 
 function moveSubtreeUnderTarget(sourceIdx,targetIdx){
-  clearTimeout(historyTimer);
+  flushEditHistoryDebounced();
   if(editPanelAsmIdx===null) return;
   const asm=assemblies[editPanelAsmIdx];
   const rows=asm.rows;
@@ -2011,6 +2111,7 @@ function saveEditHistoryDebounced(){
   const asmIdx=editPanelAsmIdx;
   clearTimeout(historyTimer);
   historyTimer=setTimeout(()=>{
+    historyTimer=null;
     if(asmIdx!==editPanelAsmIdx) return;
     saveEditHistory();
   },220);
@@ -2018,6 +2119,7 @@ function saveEditHistoryDebounced(){
 
 function undoLastChange(){
   clearTimeout(historyTimer);
+  historyTimer=null;
   if(!editHistory.length){toast('Nothing to undo');return;}
   const prevState=editHistory.pop();
   assemblies[editPanelAsmIdx].rows=prevState;
@@ -2093,7 +2195,7 @@ function insertPartAt({insertAt=null,level=1,message='New part added'}={}){
 }
 
 function duplicateEditRow(idx){
-  clearTimeout(historyTimer);
+  flushEditHistoryDebounced();
   if(editPanelAsmIdx===null) return;
   saveEditHistory();
   const asm=assemblies[editPanelAsmIdx];
@@ -2108,7 +2210,7 @@ function duplicateEditRow(idx){
 }
 
 function deleteEditRow(idx){
-  clearTimeout(historyTimer);
+  flushEditHistoryDebounced();
   if(editPanelAsmIdx===null) return;
   const asm=assemblies[editPanelAsmIdx];
   const row=asm.rows[idx];
@@ -2120,8 +2222,9 @@ function deleteEditRow(idx){
   saveEditHistory();
   asm.rows.splice(idx,count);
   if(editSelectedRowIdx!==null){
-    if(editSelectedRowIdx>=idx && editSelectedRowIdx<end) editSelectedRowIdx=Math.min(idx,asm.rows.length-1);
-    else if(editSelectedRowIdx>=end) editSelectedRowIdx-=count;
+    if(!asm.rows.length) editSelectedRowIdx=null;
+    else if(editSelectedRowIdx>=idx && editSelectedRowIdx<end) editSelectedRowIdx=Math.min(idx,asm.rows.length-1);
+    else if(editSelectedRowIdx>=end) editSelectedRowIdx=Math.max(0,editSelectedRowIdx-count);
   }
   asm.tree=buildTree(asm.rows);
   renderEditTable();
@@ -2142,8 +2245,7 @@ function getComparePool(){
   const pool=bomVersions.length ? [...assemblies, ...bomVersions] : [...assemblies];
   const seen=new Set();
   return pool.filter(a=>{
-    const rowSig=(a.rows||[]).map(r=>`${r.level||1}|${(r.component||'').trim()}|${(r.description||'').trim()}|${(r.qty||'').trim()}|${(r.uom||'').trim()}|${(r.supplier||'').trim()}`).join('||');
-    const key=`${a.id||''}|${a.material||''}|${a.version||''}|${a.project||''}|${rowSig}`;
+    const key=compareKey(a);
     if(seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -2158,11 +2260,11 @@ function populateDiffSelects(){
     sel.innerHTML='<option value="">— Select BOM —</option>';
     pool.forEach((a,i)=>{
       const opt=document.createElement('option');
-      opt.value=i;
+      opt.value=compareKey(a);
       opt.textContent=`${a.project||a.material} ${a.version?('('+a.version+')'):''} — ${a.material}`;
       sel.appendChild(opt);
     });
-    if(prev!=='' && pool[prev]) sel.value=prev;
+    if(prev!=='' && pool.some(a=>compareKey(a)===prev)) sel.value=prev;
   });
 }
 
@@ -2214,14 +2316,16 @@ function diffAssemblies(asmA, asmB){
 let activeFilters=new Set(['shared','only-a','only-b','qty-diff','supplier-diff','both-diff']);
 
 function runDiff(){
-  const idxA=document.getElementById('sel-a').value;
-  const idxB=document.getElementById('sel-b').value;
-  if(idxA===''||idxB===''){toast('Select two assemblies to compare');return;}
-  if(idxA===idxB){toast('Select two different assemblies');return;}
+  const keyA=document.getElementById('sel-a').value;
+  const keyB=document.getElementById('sel-b').value;
+  if(keyA===''||keyB===''){toast('Select two assemblies to compare');return;}
+  if(keyA===keyB){toast('Select two different assemblies');return;}
 
   const pool=getComparePool();
-  const asmA=pool[idxA];
-  const asmB=pool[idxB];
+  const asmA=pool.find(a=>compareKey(a)===keyA);
+  const asmB=pool.find(a=>compareKey(a)===keyB);
+  if(!asmA||!asmB){toast('Selection changed; please reselect and run again');populateDiffSelects();return;}
+  resetDiffFilters();
   lastDiffResults=diffAssemblies(asmA,asmB);
   compareRows=lastDiffResults.map(r=>({
     comp:r.comp,
@@ -2312,11 +2416,12 @@ function toggleChip(el,type){
 
 function exportDiff(){
   if(!lastDiffResults.length) return;
-  const idxA=document.getElementById('sel-a').value;
-  const idxB=document.getElementById('sel-b').value;
+  const keyA=document.getElementById('sel-a').value;
+  const keyB=document.getElementById('sel-b').value;
   const pool=getComparePool();
-  const asmA=pool[idxA];
-  const asmB=pool[idxB];
+  const asmA=pool.find(a=>compareKey(a)===keyA);
+  const asmB=pool.find(a=>compareKey(a)===keyB);
+  if(!asmA||!asmB){toast('Selection changed; please reselect and run again');populateDiffSelects();return;}
 
   const lines=[`Status,Part Number,Description A,Qty A,Supplier A,Description B,Qty B,Supplier B,Highlight`];
   lastDiffResults.forEach(r=>{
