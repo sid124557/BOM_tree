@@ -808,6 +808,32 @@ function buildTree(rows){
   }
   return roots;
 }
+function deepCopy(v){
+  return (typeof structuredClone==='function') ? structuredClone(v) : JSON.parse(JSON.stringify(v));
+}
+
+function makeEditableClone(idx,reason='edit'){
+  const src=assemblies[idx];
+  if(!src) return idx;
+  const clone=deepCopy(src);
+  clone.immutable=false;
+  clone.sourceRef=src.sourceRef||src.material;
+  clone.material=(src.material||'BOM')+'-WORK';
+  clone.version=(src.version||'R1')+'-WORK';
+  clone.rows=(clone.rows||[]).map(r=>({...r,id:r.id||uid()}));
+  clone.tree=buildTree(clone.rows);
+  clone.color=COLORS[assemblies.length%COLORS.length];
+  assemblies.push(clone);
+  renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();populateEditSelect();
+  toast(`Created editable working copy for ${reason}`);
+  return assemblies.length-1;
+}
+
+function ensureAssemblyMutable(idx,reason='edit'){
+  const asm=assemblies[idx];
+  if(!asm) return idx;
+  return asm.immutable ? makeEditableClone(idx,reason) : idx;
+}
 
 /* ════════ ENTRY POINT ════════ */
 function go(){
@@ -825,6 +851,8 @@ function go(){
     a.date=date||a.date||new Date().toISOString().slice(0,10);
     a.rows.forEach(r=>{if(!r.supplier) r.supplier=supplier||'';});
     a.tree=buildTree(a.rows);
+    a.immutable=true;
+    a.sourceRef=a.material;
   });
   renderNav();renderAll();updateStats();populateDiffSelects();populateBulkTargets();
 }
@@ -837,7 +865,7 @@ function quickAddRows(){
   const date=(document.getElementById('meta-date').value||new Date().toISOString().slice(0,10)).trim();
   const supplierDefault=(document.getElementById('meta-supplier').value||'').trim();
   const material=`${project.replace(/\s+/g,'_').toUpperCase()}-${version}`;
-  const asm={material,description:project,color:COLORS[assemblies.length%COLORS.length],rows:[],project,version,date};
+  const asm={material,description:project,color:COLORS[assemblies.length%COLORS.length],rows:[],project,version,date,immutable:true,sourceRef:material};
   txt.split(/\n+/).forEach((ln)=>{
     const cols=ln.split('\t');
     if(!cols.length) return;
@@ -894,6 +922,8 @@ function loadSavedBom(idx){
   assemblies[0].color=COLORS[0];
   assemblies[0].rows.forEach(r=>{if(!r.id) r.id=uid();});
   assemblies[0].tree=buildTree(assemblies[0].rows);
+  assemblies[0].immutable=true;
+  assemblies[0].sourceRef=assemblies[0].sourceRef||assemblies[0].material;
   document.getElementById('meta-project').value=assemblies[0].project||'';
   document.getElementById('meta-version').value=assemblies[0].version||'';
   document.getElementById('meta-date').value=assemblies[0].date||'';
@@ -917,7 +947,7 @@ function deleteBom(idx){bomVersions.splice(idx,1);renderBomLibrary();}
 function populateBulkTargets(){
   const sel=document.getElementById('bulk-target');
   sel.innerHTML='<option value="">Select loaded assembly</option>';
-  assemblies.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.material} — ${a.version||''}`;sel.appendChild(o);});
+  assemblies.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.material} ${a.immutable?'🔒':''} — ${a.version||''}`;sel.appendChild(o);});
 }
 
 function applyBulkEdit(){
@@ -930,7 +960,9 @@ function applyBulkEdit(){
     toast('Qty factor must be a positive number');
     return;
   }
-  const asm=assemblies[idx];
+  const mutableIdx=ensureAssemblyMutable(parseInt(idx,10),'bulk edit');
+  if(mutableIdx!==parseInt(idx,10)) document.getElementById('bulk-target').value=String(mutableIdx);
+  const asm=assemblies[mutableIdx];
   let changed=0;
   asm.rows.forEach(r=>{
     if(sup){r.supplier=sup;changed++;}
@@ -938,7 +970,7 @@ function applyBulkEdit(){
   });
   asm.tree=buildTree(asm.rows);
   renderAll();
-  if(editPanelAsmIdx===parseInt(idx,10)) renderEditTable();
+  if(editPanelAsmIdx===mutableIdx) renderEditTable();
   toast(`Bulk edit applied (${changed} updates)`);
 }
 
@@ -1125,6 +1157,7 @@ function fallbackCopyText(text){
 function toggleAsmEdit(idx){
   clearTimeout(historyTimer);
   if(!assemblies[idx]) return;
+  idx=ensureAssemblyMutable(idx,'edit');
   editPanelAsmIdx=idx;
   editSelectedRowIdx=null;
   editHistory=[];
@@ -1198,13 +1231,14 @@ function createClonedBomFromAssembly(sourceIdx,{fromExportMenu=false}={}){
   copy.date=new Date().toISOString().slice(0,10);
   copy.rows=(copy.rows||[]).map(r=>({...r,id:uid()}));
   copy.tree=buildTree(copy.rows);
+  copy.immutable=false;
 
   const id=`${copy.project||'P'}|${copy.version||'R'}|${copy.material}`;
   const existing=bomVersions.findIndex(v=>v.id===id);
   const snap={...JSON.parse(JSON.stringify(copy)),id,savedAt:new Date().toISOString()};
   if(existing>=0) bomVersions[existing]=snap; else bomVersions.push(snap);
 
-  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length]});
+  assemblies.push({...copy,color:COLORS[assemblies.length%COLORS.length],immutable:false});
   renderBomLibrary();
   editPanelAsmIdx=null;
   editHistory=[];
@@ -1582,7 +1616,7 @@ function populateEditSelect(){
   assemblies.forEach((a,i)=>{
     const opt=document.createElement('option');
     opt.value=i;
-    opt.textContent=`${a.material} — ${a.description||'No description'}`;
+    opt.textContent=`${a.material} ${a.immutable?'🔒':''} — ${a.description||'No description'}`;
     sel.appendChild(opt);
   });
   if(prev!=='' && assemblies[prev]) sel.value=prev;
@@ -1607,7 +1641,9 @@ function selectEditAsm(){
       </div>`;
     return;
   }
-  editPanelAsmIdx=parseInt(idx);
+  const safeIdx=ensureAssemblyMutable(parseInt(idx,10),'edit');
+  editPanelAsmIdx=safeIdx;
+  document.getElementById('edit-asm-select').value=String(safeIdx);
   editHistory=[];
   lastHistorySignature='';
   editSelectedRowIdx=null;
